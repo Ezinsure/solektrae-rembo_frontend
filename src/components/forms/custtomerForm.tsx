@@ -21,12 +21,12 @@ import { cn } from "@/lib/utils";
 import IremboLogo from "../../assets/logos/irembo-logo.png";
 import { PhoneInput } from "international-fields";
 import "international-fields/styles";
-
 import {
     iremboSchema,
     type IremboFormValues,
     STEP_FIELDS,
 } from "@/lib/form-schema";
+import { useCreateCustomer } from "@/hooks/useCustomer";
 
 type Step = 1 | 2 | 3;
 
@@ -41,16 +41,20 @@ const SERVICES = [
     { value: "others", label: "Other Services" },
 ];
 
-const UserInfoForm = () => {
+const CustomerForm = () => {
     const [step, setStep] = useState<Step>(1);
+    const [selectedOption, setSelectedOption] = useState("passport");
+    const createCustomer = useCreateCustomer();
+
     const {
         register,
         handleSubmit,
         control,
         trigger,
         reset,
+        setValue,
         watch,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<IremboFormValues>({
         resolver: zodResolver(iremboSchema),
         mode: "onTouched",
@@ -69,10 +73,22 @@ const UserInfoForm = () => {
         },
     });
 
-    // Live values for the review step
     const values = watch();
+
     const serviceLabel =
-        SERVICES.find((s) => s.value === values.service)?.label ?? "—";
+        selectedOption === "others"
+            ? values.service || "—"
+            : SERVICES.find((s) => s.value === values.service)?.label ?? "—";
+
+    const handleOptionChange = (option: string) => {
+        setSelectedOption(option);
+        if (option !== "others") {
+
+            setValue("service", option, { shouldValidate: true });
+        } else {
+            setValue("service", "", { shouldValidate: true });
+        }
+    };
 
     const goNext = async () => {
         const fields = step === 1 ? STEP_FIELDS[1] : STEP_FIELDS[2];
@@ -82,22 +98,56 @@ const UserInfoForm = () => {
 
     const goBack = () => setStep((s) => (s - 1) as Step);
 
-    const onSubmit = async (data: IremboFormValues) => {
-        console.log("Submitting:", data);
-        // TODO: send to your API
-        alert("Form submitted successfully!");
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    const onSubmit = (data: IremboFormValues) => {
+        setSubmitError(null);
+        setSubmitSuccess(false);
+
+        const payload = {
+            names: data.name,
+            email: data.email,
+            phoneNumber: data.phone,
+            service: data.service,
+            height: data.height,
+            hovName: data.villageHeadName,
+            hovNumber: data.villageHeadPhone,
+            district: data.district,
+            sector: data.sector,
+            cell: data.cell,
+            village: data.village,
+        };
+
+        createCustomer.mutate(payload, {
+            onSuccess: () => {
+                setSubmitSuccess(true);
+                setTimeout(() => {
+                    reset();
+                    setSelectedOption("passport");
+                    setStep(1);
+                    setSubmitSuccess(false);
+                }, 3500);
+            },
+            onError: (error: any) => {
+                setSubmitError(
+                    error?.response?.data?.message ??
+                    "Something went wrong. Please try again."
+                );
+            },
+        });
     };
 
     const handleCancel = () => {
         if (confirm("Cancel and reset the form?")) {
             reset();
+            setSelectedOption("passport");
             setStep(1);
         }
     };
 
     return (
         <main className="md:py-10">
-            {/* Step indicators */}
             <div className="flex items-center justify-between text-sm max-w-2xl container mx-auto my-6 mb-10">
                 {[1, 2, 3].map((n) => (
                     <div key={n} className="flex items-center gap-2">
@@ -175,6 +225,7 @@ const UserInfoForm = () => {
                                                 onChange={(value) => field.onChange(value)}
                                                 defaultCountry="RW"
                                                 placeholder="Enter phone number"
+                                                className="bg-white! "
                                             />
                                         )}
                                     />
@@ -189,28 +240,39 @@ const UserInfoForm = () => {
                                     <FieldLabel className="text-sm opacity-80">
                                         Choose Service / Choisir un service / Hitamo Serivisi *
                                     </FieldLabel>
-                                    <Controller
-                                        name="service"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <RadioGroup
-                                                value={field.value}
-                                                onValueChange={field.onChange}
-                                                className="max-w-44"
+
+                                    <RadioGroup
+                                        value={selectedOption}
+                                        onValueChange={handleOptionChange}
+                                        className="max-w-44"
+                                    >
+                                        {SERVICES.map((s) => (
+                                            <FieldLabel key={s.value} htmlFor={s.value}>
+                                                <Field orientation="horizontal">
+                                                    <FieldContent>
+                                                        <FieldTitle>{s.label}</FieldTitle>
+                                                    </FieldContent>
+                                                    <RadioGroupItem value={s.value} id={s.value} />
+                                                </Field>
+                                            </FieldLabel>
+                                        ))}
+                                    </RadioGroup>
+
+                                    {selectedOption === "others" && (
+                                        <div className="mt-3">
+                                            <FieldLabel
+                                                htmlFor="service"
+                                                className="text-sm opacity-80 mb-1"
                                             >
-                                                {SERVICES.map((s) => (
-                                                    <FieldLabel key={s.value} htmlFor={s.value}>
-                                                        <Field orientation="horizontal">
-                                                            <FieldContent>
-                                                                <FieldTitle>{s.label}</FieldTitle>
-                                                            </FieldContent>
-                                                            <RadioGroupItem value={s.value} id={s.value} />
-                                                        </Field>
-                                                    </FieldLabel>
-                                                ))}
-                                            </RadioGroup>
-                                        )}
-                                    />
+                                                Please specify / Précisez / Sobanura
+                                            </FieldLabel>
+                                            <Input
+                                                id="service"
+                                                placeholder="Describe the service you need"
+                                                {...register("service")}
+                                            />
+                                        </div>
+                                    )}
                                     {errors.service && (
                                         <p className="text-xs text-red-500 mt-1">
                                             {errors.service.message}
@@ -226,7 +288,6 @@ const UserInfoForm = () => {
                             </div>
                         </FieldSet>
                     )}
-
 
                     {step === 2 && (
                         <FieldSet>
@@ -249,17 +310,11 @@ const UserInfoForm = () => {
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel
-                                        htmlFor="villageHeadName"
-                                        className="text-sm opacity-80"
-                                    >
+                                    <FieldLabel htmlFor="villageHeadName" className="text-sm opacity-80">
                                         Name of the Head of Village / Nom du chef du village /
-                                        Amazina y'umukuru w'umudugudu *
+                                        Amazina y&apos;umukuru w&apos;umudugudu *
                                     </FieldLabel>
-                                    <Input
-                                        id="villageHeadName"
-                                        {...register("villageHeadName")}
-                                    />
+                                    <Input id="villageHeadName" {...register("villageHeadName")} />
                                     {errors.villageHeadName && (
                                         <p className="text-xs text-red-500 mt-1">
                                             {errors.villageHeadName.message}
@@ -268,12 +323,9 @@ const UserInfoForm = () => {
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel
-                                        htmlFor="villageHeadPhone"
-                                        className="text-sm opacity-80"
-                                    >
+                                    <FieldLabel htmlFor="villageHeadPhone" className="text-sm opacity-80">
                                         Phone Number of the Head of Village / Numéro de téléphone du
-                                        chef du village / Telefone y'umukuru w'umudugudu *
+                                        chef du village / Telefone y&apos;umukuru w&apos;umudugudu *
                                     </FieldLabel>
                                     <Input
                                         id="villageHeadPhone"
@@ -342,7 +394,6 @@ const UserInfoForm = () => {
                         </FieldSet>
                     )}
 
-
                     {step === 3 && (
                         <FieldSet>
                             <FieldLegend className="text-xl!">Review & Submit</FieldLegend>
@@ -350,60 +401,50 @@ const UserInfoForm = () => {
                                 Please confirm your details before submitting
                             </FieldDescription>
 
-                            {/* Inline ReviewSummary — reads live values from `watch()` */}
                             <div className="mt-6 rounded-md border bg-muted/40 p-4 text-sm space-y-4">
-                                <p>
-                                    <span className="font-medium">Name:</span>{" "}
-                                    {values.name || "—"}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Email:</span>{" "}
-                                    {values.email || "—"}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Phone:</span>{" "}
-                                    {values.phone || "—"}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Service:</span> {serviceLabel}
-                                </p>
+                                <p><span className="font-medium">Name:</span> {values.name || "—"}</p>
+                                <p><span className="font-medium">Email:</span> {values.email || "—"}</p>
+                                <p><span className="font-medium">Phone:</span> {values.phone || "—"}</p>
+                                <p><span className="font-medium">Service:</span> {serviceLabel}</p>
                                 <p>
                                     <span className="font-medium">Height:</span>{" "}
                                     {values.height ? `${values.height} cm` : "—"}
                                 </p>
                                 <p>
                                     <span className="font-medium">Head of Village:</span>{" "}
-                                    {values.villageHeadName || "—"} (
-                                    {values.villageHeadPhone || "—"})
+                                    {values.villageHeadName || "—"} ({values.villageHeadPhone || "—"})
                                 </p>
                                 <p>
-                                    <span className="font-medium">District:</span>{" "}
-                                    {values.district || "—"} /{" "}
-                                    <span className="font-medium">Sector:</span>{" "}
-                                    {values.sector || "—"}
+                                    <span className="font-medium">District:</span> {values.district || "—"} /{" "}
+                                    <span className="font-medium">Sector:</span> {values.sector || "—"}
                                 </p>
                                 <p>
-                                    <span className="font-medium">Cell:</span>{" "}
-                                    {values.cell || "—"} /{" "}
-                                    <span className="font-medium">Village:</span>{" "}
-                                    {values.village || "—"}
+                                    <span className="font-medium">Cell:</span> {values.cell || "—"} /{" "}
+                                    <span className="font-medium">Village:</span> {values.village || "—"}
                                 </p>
                             </div>
+
+                            {submitError && (
+                                <div className="mt-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                                    {submitError}
+                                </div>
+                            )}
+                            {submitSuccess && (
+                                <div className="mt-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+                                    Your application was submitted successfully.
+                                </div>
+                            )}
 
                             <div className="flex justify-between mt-6">
                                 <Button type="button" variant="outline" onClick={goBack}>
                                     Back
                                 </Button>
                                 <div className="flex gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleCancel}
-                                    >
+                                    <Button type="button" variant="outline" onClick={handleCancel}>
                                         Cancel
                                     </Button>
-                                    <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting ? "Submitting..." : "Submit"}
+                                    <Button type="submit" disabled={createCustomer.isPending}>
+                                        {createCustomer.isPending ? "Submitting..." : "Submit"}
                                     </Button>
                                 </div>
                             </div>
@@ -414,4 +455,4 @@ const UserInfoForm = () => {
         </main>
     );
 };
-export default UserInfoForm;
+export default CustomerForm;
