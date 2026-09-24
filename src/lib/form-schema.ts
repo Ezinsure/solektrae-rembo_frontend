@@ -37,3 +37,10 @@ export const STEP_FIELDS: Record<1 | 2, (keyof IremboFormValues)[]> = {
     "village",
   ],
 };
+
+// login-schema
+export const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+export type LoginFormValues = z.infer<typeof loginSchema>;

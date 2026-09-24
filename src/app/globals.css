@@ -64,45 +64,31 @@ body {
   font-family: var(--font-poppins), sans-serif;
 }
 
-/* =========================
-   LIGHT MODE
-   ========================= */
 :root {
-  /* Your main colors */
+  
   --background: #E9E9EB;
   --foreground: #112233;
-
-  /* Cards / surfaces */
   --card: #FFFFFF;
   --card-foreground: #112233;
 
   --popover: #FFFFFF;
   --popover-foreground: #112233;
-
-  /* Primary / buttons */
   --primary: #004EA4;
   --primary-foreground: #FFFFFF;
 
   /* Secondary */
   --secondary: #DDE0E4;
   --secondary-foreground: #112233;
-
-  /* Muted */
   --muted: #DEE0E3;
   --muted-foreground: #5F6B78;
 
   /* Accent */
   --accent: #DCE9F5;
   --accent-foreground: #004EA4;
-
-  /* Destructive */
   --destructive: #DC2626;
 
-  /* Borders / inputs */
   --border: #D3D5D8;
   --input: #D3D5D8;
-
-  /* Focus ring */
   --ring: #004EA4;
 
   --radius: 0.625rem;
@@ -114,7 +100,6 @@ body {
   --chart-4: #60A5FA;
   --chart-5: #93C5FD;
 
-  /* Sidebar */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #112233;
   --sidebar-primary: #004EA4;
@@ -123,12 +108,10 @@ body {
   --sidebar-accent-foreground: #004EA4;
   --sidebar-border: #D3D5D8;
   --sidebar-ring: #004EA4;
-}
 
-/* =========================
-   DARK MODE
-   ========================= */
+}
 .dark {
+  
   --background: #0E1117;
   --foreground: #F1F5F9;
 
@@ -138,7 +121,6 @@ body {
   --popover: #171C24;
   --popover-foreground: #F1F5F9;
 
-  /* Keep your brand blue */
   --primary: #004EA4;
   --primary-foreground: #FFFFFF;
 

@@ -1,14 +1,19 @@
+'use client';
+
 import PaginationPage from "@/components/pagination/page";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useGetAllCustomers } from "@/hooks/useCustomer";
 
 const CustomersView = () => {
+    const { data: customerData, isLoading: customerLoading } =
+        useGetAllCustomers();
     return (
         <div>
             <h1 className="text-2xl font-medium">Customers</h1>
-            <p className="text-muted-foreground mt-.5">
+            <p className="text-muted-foreground ">
                 Manage customer list here.
             </p>
-            <div className="p-6">
+            <div className="py-6">
                 <div className="border border-[#E9E9EB] rounded-md!">
                     <Table>
                         <TableHeader className="bg-[#E9E9EB] rounded-t-lg!">
@@ -19,33 +24,25 @@ const CustomersView = () => {
                                 <TableHead className="font-semibold">Phone</TableHead>
                                 <TableHead className="font-semibold">Service</TableHead>
                                 <TableHead className="font-semibold">District</TableHead>
-                                <TableHead className="text-right font-semibold">Status</TableHead>
+                                <TableHead className="font-semibold">Status</TableHead>
                                 {/* <TableHead className="text-right">Actions</TableHead> */}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow>
-                                <TableCell className="font-medium">11/09/2026</TableCell>
-                                <TableCell className="font-medium">Kwizera Em</TableCell>
-                                <TableCell>em@gmail.com</TableCell>
-                                <TableCell>07858373874</TableCell>
-                                <TableCell>Passport</TableCell>
-                                <TableCell>Huye</TableCell>
-                                <TableCell className="text-right">
-                                    Complete
+                            {customerData?.data?.map((data: any) =>
+                            // eslint-disable-next-line react/jsx-key
+                            (<TableRow>
+                                <TableCell >{data?.createdAt.slice(0, 10)}</TableCell>
+                                <TableCell >{data?.names}</TableCell>
+                                <TableCell>{data?.email}</TableCell>
+                                <TableCell>{data?.phoneNumber}</TableCell>
+                                <TableCell>{data?.service}</TableCell>
+                                <TableCell>{data?.district}</TableCell>
+                                <TableCell >
+                                    {data?.status}
                                 </TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell className="font-medium">11/09/2026</TableCell>
-                                <TableCell className="font-medium">Kwizera Em</TableCell>
-                                <TableCell>em@gmail.com</TableCell>
-                                <TableCell>07858373874</TableCell>
-                                <TableCell>Passport</TableCell>
-                                <TableCell>Huye</TableCell>
-                                <TableCell className="text-right">
-                                    Complete
-                                </TableCell>
-                            </TableRow>
+                            </TableRow>)
+                            )}
                         </TableBody>
                     </Table></div>
                 <div ><PaginationPage /></div>

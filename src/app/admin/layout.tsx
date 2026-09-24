@@ -6,7 +6,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
       <TopNav />
-      <main className="p-6 bg-white max-w-[98%] mx-auto container mt-4 rounded-md min-h-[88vh]">
+      <main className="p-10 px-12 bg-white max-w-[98%] mx-auto container mt-4 rounded-md min-h-[88vh]">
         {children}
       </main>
     </div>
