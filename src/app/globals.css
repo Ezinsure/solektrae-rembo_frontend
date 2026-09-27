@@ -108,6 +108,7 @@ body {
   --sidebar-accent-foreground: #004EA4;
   --sidebar-border: #D3D5D8;
   --sidebar-ring: #004EA4;
+  
 
 }
 .dark {
@@ -154,6 +155,11 @@ body {
   --sidebar-accent-foreground: #75B5F5;
   --sidebar-border: #2B3440;
   --sidebar-ring: #3986D1;
+}
+.phone-input:focus {
+  border-color: #0072ce !important;
+  box-shadow: 0 0 0 2px rgba(0, 114, 206, 0.2) !important;
+  outline: none !important;
 }
 
 @layer base {

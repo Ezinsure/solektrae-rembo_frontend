@@ -26,7 +26,7 @@ export function ViewCustomer({ customer }: { customer: any }) {
             <DetailRow label="Head of Village Phone" value={customer.hovNumber} />
             <DetailRow label="Registered" value={formatDateTime(customer.createdAt)} />
             {customer?.status !== 'pending' && <DetailRow label="Updated At" value={formatDateTime(customer.updatedAt)} />}
-            {customer?.status !== 'pending' && <DetailRow label="Updated By" value={formatDateTime(customer.updatedBy)} />}
+            {customer?.status !== 'pending' && <DetailRow label="Updated By" value={formatDateTime(customer?.updatedBy?.names)} />}
         </div>
     );
 }

@@ -6,6 +6,8 @@ const STATUS_STYLES: Record<string, string> = {
     "in-progress": "bg-blue-50 text-blue-600 border-blue-200",
     completed: "bg-emerald-50 text-emerald-600 border-emerald-200",
     cancelled: "bg-red-50 text-red-600 border-red-200",
+    active: "bg-emerald-50 text-emerald-600 border-emerald-200",
+    inactive: "bg-gray-50 text-gray-500 border-gray-200",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -13,6 +15,8 @@ const STATUS_LABELS: Record<string, string> = {
     "in-progress": "In Progress",
     completed: "Completed",
     cancelled: "Cancelled",
+    active: "Active",
+    inactive: "Inactive",
 };
 
 interface StatusBadgeProps {

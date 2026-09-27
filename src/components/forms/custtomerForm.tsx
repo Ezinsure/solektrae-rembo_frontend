@@ -17,8 +17,6 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PhoneInput } from "international-fields";
-import "international-fields/styles";
 import {
     iremboSchema,
     type IremboFormValues,
@@ -29,6 +27,8 @@ import IremboLogo from "../../assets/logos/irembo-logo.png";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 type Step = 1 | 2 | 3;
 
@@ -252,11 +252,25 @@ export function CustomerForm({
                                         control={control}
                                         render={({ field }) => (
                                             <PhoneInput
+                                                country="rw"
                                                 value={field.value}
-                                                onChange={(value) => field.onChange(value)}
-                                                defaultCountry="RW"
-                                                placeholder="Enter phone number"
+                                                onChange={(value) => field.onChange("+" + value)}
+                                                inputStyle={{
+                                                    width: "100%",
+                                                    height: "33px",
+                                                    background: "white",
+                                                    color: "#111",
+                                                    border: "1px solid #d1d5db",
+                                                    borderRadius: "0 0.5rem 0.5rem 0",
+                                                }}
+                                                buttonStyle={{
+                                                    background: "white",
+                                                    border: "1px solid #d1d5db",
+                                                    borderRadius: "0.5rem 0 0 0.5rem",
+                                                }}
                                             />
+
+
                                         )}
                                     />
                                     {errors.phone && (
@@ -326,11 +340,11 @@ export function CustomerForm({
                                                 htmlFor="service"
                                                 className="text-sm opacity-80 mb-1"
                                             >
-                                                Please specify / Précisez / Sobanura
+                                                Service Name / Nom du Service / Izina rya Serivisi *
                                             </FieldLabel>
                                             <Input
                                                 id="service"
-                                                placeholder="Describe the service you need"
+                                                placeholder=""
                                                 {...register("service")}
                                             />
                                         </div>

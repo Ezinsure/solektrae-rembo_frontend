@@ -25,6 +25,8 @@ import {
 import { MoreHorizontal, Eye, Pencil, CircleDot } from "lucide-react";
 import { StatusBadge } from "@/components/common/statusBadge";
 import { formatDateTime } from "@/lib/apiError";
+import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/comfirmDialog";
 
 const STATUS_OPTIONS = ["pending", "completed", "cancelled"];
 
@@ -45,103 +47,137 @@ const CustomersTable = ({
 }) => {
     const customers = customerData?.data ?? [];
 
-    return (
-        <Table>
-            <TableHeader className="bg-[#E9E9EB] rounded-t-lg!">
-                <TableRow>
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold">Names</TableHead>
-                    <TableHead className="font-semibold">Email</TableHead>
-                    <TableHead className="font-semibold">Phone</TableHead>
-                    <TableHead className="font-semibold">Service</TableHead>
-                    <TableHead className="font-semibold">District</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold ">
-                        Actions
-                    </TableHead>
-                </TableRow>
-            </TableHeader>
+    const [pendingChange, setPendingChange] = useState<{
+        customer: any;
+        status: string;
+    } | null>(null);
 
-            <TableBody className="border border-[#E9E9EB]  rounded-lg ">
-                {customerLoading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                        <TableRow key={i}>
-                            {Array.from({ length: COLUMN_COUNT }).map((_, j) => (
-                                <TableCell key={j}>
-                                    <Skeleton className="h-4 w-full max-w-24" />
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    ))
-                ) : customers.length === 0 ? (
+    const confirmStatusChange = () => {
+        if (!pendingChange) return;
+        onStatusChange(pendingChange.customer, pendingChange.status);
+        setPendingChange(null);
+    };
+
+    return (
+        <>
+            <Table>
+                <TableHeader className="bg-[#E9E9EB] rounded-t-lg!">
                     <TableRow>
-                        <TableCell
-                            colSpan={COLUMN_COUNT}
-                            className="text-center text-muted-foreground py-10"
-                        >
-                            No customers found.
-                        </TableCell>
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Names</TableHead>
+                        <TableHead className="font-semibold">Email</TableHead>
+                        <TableHead className="font-semibold">Phone</TableHead>
+                        <TableHead className="font-semibold">Service</TableHead>
+                        <TableHead className="font-semibold">District</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold ">Actions</TableHead>
                     </TableRow>
-                ) : (
-                    customers.map((data: any) => (
-                        <TableRow key={data.id}>
-                            <TableCell>{formatDateTime(data.createdAt)}</TableCell>
-                            <TableCell>{data?.names}</TableCell>
-                            <TableCell>{data?.email}</TableCell>
-                            <TableCell>{data?.phoneNumber}</TableCell>
-                            <TableCell>{data?.service}</TableCell>
-                            <TableCell>{data?.district}</TableCell>
-                            <TableCell>
-                                <StatusBadge status={data?.status} />
-                            </TableCell>
-                            <TableCell >
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => onView(data)}>
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                View
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onEdit(data)}>
-                                                <Pencil className="h-4 w-4 mr-2" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSub>
-                                                <DropdownMenuSubTrigger>
-                                                    <CircleDot className="h-4 w-4 mr-2" />
-                                                    Update Status
-                                                </DropdownMenuSubTrigger>
-                                                <DropdownMenuSubContent>
-                                                    {STATUS_OPTIONS.map((s) => (
-                                                        <DropdownMenuItem
-                                                            key={s}
-                                                            disabled={data.status === s}
-                                                            className="capitalize"
-                                                            onClick={() =>
-                                                                onStatusChange(data, s)
-                                                            }
-                                                        >
-                                                            {s}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuSubContent>
-                                            </DropdownMenuSub>
-                                        </DropdownMenuGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                </TableHeader>
+
+                <TableBody className="border border-[#E9E9EB]  rounded-lg ">
+                    {customerLoading ? (
+                        Array.from({ length: 6 }).map((_, i) => (
+                            <TableRow key={i}>
+                                {Array.from({ length: COLUMN_COUNT }).map((_, j) => (
+                                    <TableCell key={j}>
+                                        <Skeleton className="h-4 w-full max-w-24" />
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))
+                    ) : customers.length === 0 ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={COLUMN_COUNT}
+                                className="text-center text-muted-foreground py-10"
+                            >
+                                No customers found.
                             </TableCell>
                         </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+                    ) : (
+                        customers.map((data: any) => (
+                            <TableRow key={data.id}>
+                                <TableCell>{formatDateTime(data.createdAt)}</TableCell>
+                                <TableCell>{data?.names}</TableCell>
+                                <TableCell>{data?.email}</TableCell>
+                                <TableCell>{data?.phoneNumber}</TableCell>
+                                <TableCell>{data?.service}</TableCell>
+                                <TableCell>{data?.district}</TableCell>
+                                <TableCell>
+                                    <StatusBadge status={data?.status} />
+                                </TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => onView(data)}>
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    View
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onEdit(data)}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                {data.status === "pending" && (
+                                                    <DropdownMenuSub>
+                                                        <DropdownMenuSubTrigger>
+                                                            <CircleDot className="h-4 w-4 mr-2" />
+                                                            Update Status
+                                                        </DropdownMenuSubTrigger>
+                                                        <DropdownMenuSubContent>
+                                                            {STATUS_OPTIONS.filter(
+                                                                (s) => s !== "pending",
+                                                            ).map((s) => (
+                                                                <DropdownMenuItem
+                                                                    key={s}
+                                                                    className="capitalize"
+                                                                    onClick={() =>
+                                                                        setPendingChange({
+                                                                            customer: data,
+                                                                            status: s,
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    {s}
+                                                                </DropdownMenuItem>
+                                                            ))}
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuSub>
+                                                )}
+                                            </DropdownMenuGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+            <ConfirmDialog
+                open={!!pendingChange}
+                onOpenChange={(open) => {
+                    if (!open) setPendingChange(null);
+                }}
+                title="Update customer status"
+                description={
+                    pendingChange ? (
+                        <>
+                            Change <strong>{pendingChange.customer.names}</strong>&apos;s status
+                            to <strong>{pendingChange.status?.toUpperCase()}</strong>?
+                        </>
+                    ) : undefined
+                }
+                confirmLabel="Update"
+                onConfirm={confirmStatusChange}
+            />
+        </>
     );
 };
 export default CustomersTable;
