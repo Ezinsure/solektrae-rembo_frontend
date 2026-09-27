@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (data: any) => AuthService.login(data),
     onSuccess: (response) => {

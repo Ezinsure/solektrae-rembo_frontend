@@ -14,8 +14,10 @@ export const clearAccessToken = () => {
   accessToken = null;
 };
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_SERVER_URL;
+
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_APP_SERVER_URL,
+  baseURL: BASE_URL,
   timeout: 15000,
   withCredentials: true,
   headers: {
@@ -34,11 +36,61 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Unwrap response.data + handle auth errors
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+      .then((res) => {
+        const newToken = res.data?.data?.accessToken;
+        if (!newToken) throw new Error("Refresh response missing accessToken");
+        setAccessToken(newToken);
+        return newToken;
+      })
+      .finally(() => {
+        refreshPromise = null; // release the lock whether it succeeded or failed
+      });
+  }
+  return refreshPromise;
+}
+
+// Unwrap response.data + handle auth errors with auto-refresh-and-retry
 axiosInstance.interceptors.response.use(
   (response) => response.data,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as
+      | (AxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+
+    const isUnauthorized = error.response?.status === 401;
+    const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
+    const alreadyRetried = originalRequest?._retry;
+
+    if (
+      isUnauthorized &&
+      !isRefreshCall &&
+      !alreadyRetried &&
+      originalRequest
+    ) {
+      originalRequest._retry = true;
+      try {
+        const newToken = await refreshAccessToken();
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${newToken}`,
+        };
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        clearAccessToken();
+        if (typeof window !== "undefined") {
+          window.location.assign("/login");
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    if (isUnauthorized) {
       clearAccessToken();
     }
     return Promise.reject(error);
