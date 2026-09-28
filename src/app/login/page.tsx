@@ -6,10 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/hooks/useAuth";
 import { LoginFormValues, loginSchema } from "@/lib/form-schema";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import IremboLogo from "../../../public/favicon.ico";
 
-const LoginForm = () => {
+
+function LoginForm() {
   const login = useLogin();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +36,7 @@ const LoginForm = () => {
       },
     });
   };
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#f4f3fb] p-4">
       <div className="w-full max-w-2xl bg-white rounded-xl  overflow-hidden">
@@ -109,5 +111,13 @@ const LoginForm = () => {
       </div>
     </main>
   );
-};
-export default LoginForm;
+
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
