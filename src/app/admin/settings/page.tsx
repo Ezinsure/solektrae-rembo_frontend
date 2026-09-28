@@ -1,4 +1,3 @@
-// app/admin/settings/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -10,6 +9,10 @@ import { UserCard } from "./users/userCard";
 import PaginatePage from "@/components/pagination/page";
 import { ViewDrawer } from "@/components/drawer/viewDrawer";
 import { ViewUser } from "./users/viewUser";
+import { FormModal } from "@/components/modal/editModal";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { UserForm } from "@/components/forms/userForm";
 
 const ROLE_OPTIONS = [
     { label: "All roles", value: "all" },
@@ -34,6 +37,8 @@ const SettingsView = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [editOpen, setEditOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
+
 
     const users = userData?.data ?? [];
 
@@ -60,38 +65,43 @@ const SettingsView = () => {
         <div>
             <h1 className="text-2xl font-medium">Settings</h1>
             <p className="text-muted-foreground">Manage all users.</p>
-
             <div className="py-6 space-y-6">
                 <UsersStats users={users} isLoading={userLoading} />
 
-                <TableFilters
-                    search={search}
-                    onSearchChange={(value) => {
-                        setSearch(value);
-                        setPage(1);
-                    }}
-                    searchPlaceholder="Search users..."
-                    filters={[
-                        {
-                            value: role,
-                            onChange: (value) => {
-                                setRole(value);
-                                setPage(1);
+                <div className="flex justify-between my-8" >
+                    <Button onClick={() => setCreateOpen(true)}>
+                        {" "}
+                        <Plus />
+                        New User
+                    </Button>
+                    <TableFilters
+                        search={search}
+                        onSearchChange={(value) => {
+                            setSearch(value);
+                            setPage(1);
+                        }}
+                        searchPlaceholder="Search users..."
+                        filters={[
+                            {
+                                value: role,
+                                onChange: (value) => {
+                                    setRole(value);
+                                    setPage(1);
+                                },
+                                options: ROLE_OPTIONS,
+                                placeholder: "Filter by role",
                             },
-                            options: ROLE_OPTIONS,
-                            placeholder: "Filter by role",
-                        },
-                        {
-                            value: status,
-                            onChange: (value) => {
-                                setStatus(value);
-                                setPage(1);
+                            {
+                                value: status,
+                                onChange: (value) => {
+                                    setStatus(value);
+                                    setPage(1);
+                                },
+                                options: STATUS_OPTIONS,
+                                placeholder: "Filter by status",
                             },
-                            options: STATUS_OPTIONS,
-                            placeholder: "Filter by status",
-                        },
-                    ]}
-                />
+                        ]}
+                    /></div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
                     {userLoading ? (
@@ -121,7 +131,8 @@ const SettingsView = () => {
                                     setViewOpen(true);
                                 }}
                                 onEdit={(user) => {
-                                    /* open edit modal */
+                                    setSelectedUser(user);
+                                    setEditOpen(true);
                                 }}
                                 onDelete={(user) => {
                                     /* open delete confirm dialog */
@@ -155,6 +166,22 @@ const SettingsView = () => {
                     {selectedUser && <ViewUser user={selectedUser} />}
                 </ViewDrawer>
             )}
+
+            {/* Create */}
+            <FormModal open={createOpen} onOpenChange={setCreateOpen} title="New User">
+                <UserForm onSuccess={() => setCreateOpen(false)} />
+            </FormModal>
+
+            {/* update */}
+            <FormModal open={editOpen} onOpenChange={setEditOpen} title="Edit User">
+                {selectedUser && (
+                    <UserForm
+                        key={selectedUser.id} // remounts so defaultValues refresh per user
+                        user={selectedUser}
+                        onSuccess={() => setEditOpen(false)}
+                    />
+                )}
+            </FormModal>
         </div>
     );
 };

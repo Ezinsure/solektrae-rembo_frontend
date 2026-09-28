@@ -4,7 +4,6 @@ const PUBLIC_ROUTES = ["/", "/login"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  console.log("PROXY RUNNING FOR:", pathname);
   if (PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
   }

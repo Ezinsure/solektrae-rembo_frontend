@@ -17,12 +17,9 @@ import { LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetMe, useLogout } from "@/hooks/useAuth";
 import { getInitials } from "@/helper";
+import { canSeeLink, NAV_LINKS } from "../../config/nav";
 
-const NAV_LINKS: { href: string; label: string }[] = [
-  // { label: "Dashboard", href: "/admin" },
-  { label: "Customers", href: "/admin/customers" },
-  { label: "Settings", href: "/admin/settings" },
-];
+
 
 const TopNav = () => {
   const pathname = usePathname();
@@ -31,10 +28,12 @@ const TopNav = () => {
 
   const initials = getInitials(user?.names);
 
+  const visibleLinks = NAV_LINKS.filter((link) => canSeeLink(link, user?.role));
+
   return (
     <header className="w-full bg-white max-w-[98%] mx-auto container my-3 rounded-2xl">
       <div className=" flex h-14 items-center justify-between px-6">
-        <Link href="/admin/customers" className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Image
             src={IremboLogo}
             alt="Irembo Logo"
@@ -42,9 +41,9 @@ const TopNav = () => {
             height={34}
             priority
           />
-        </Link>
+        </div>
         <nav className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive =
               link.href === "/admin/customers"
                 ? pathname === "/admin/customers"
@@ -57,7 +56,7 @@ const TopNav = () => {
                 className={cn(
                   "text-sm font-medium transition-colors",
                   isActive
-                    ? "text-foreground bg-[#004ea430] px-4 py-1.5 rounded-2xl "
+                    ? "text-foreground bg-[#004ea430] px-4 py-1.5 rounded-2xl"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -65,6 +64,7 @@ const TopNav = () => {
               </Link>
             );
           })}
+
         </nav>
         <NavigationMenu>
           <NavigationMenuList >

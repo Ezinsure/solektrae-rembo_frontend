@@ -24,7 +24,7 @@ export const useGetUser = (id: string) => {
   });
 };
 
-export const useCreateUser= () => {
+export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => UserService.create(data),
@@ -46,7 +46,7 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       UserService.update(id, data),
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [USER_KEY] });
       toast.success("User updated successfully.", {
         description: "The user information has been updated.",
