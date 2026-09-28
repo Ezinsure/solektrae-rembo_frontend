@@ -185,7 +185,7 @@ export function CustomerForm({
                             className={cn(
                                 "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium",
                                 step === n
-                                    ? "bg-red text-primary-foreground"
+                                    ? "bg-primary text-primary-foreground"
                                     : "bg-muted text-muted-foreground"
                             )}
                         >
