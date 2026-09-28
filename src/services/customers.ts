@@ -15,6 +15,11 @@ export const CustomerService = {
   update: (id: string, data: Record<string, unknown>) =>
     HttpRequest.patch(`${BASE}/${id}`, data),
 
+  updateStatus: (id: string, status: string) =>
+    HttpRequest.patch(`${BASE}/${id}/status`, {
+      status,
+    }),
+
   remove: (id: string) => HttpRequest.delete(`${BASE}/${id}`),
 
   restore: (id: string) => HttpRequest.patch(`${BASE}/${id}/restore`),

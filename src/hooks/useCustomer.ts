@@ -75,6 +75,19 @@ export const useDeleteCustomer = () => {
   });
 };
 
+export const useUpdateCustomerStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      CustomerService.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CUSTOMERS_KEY] });
+      toast.success("Updated successfully.");
+    },
+    onError: handleApiError,
+  });
+};
+
 export const useRestoreCustomer = () => {
   const queryClient = useQueryClient();
   return useMutation({

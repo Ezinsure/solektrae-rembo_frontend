@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/login"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
   if (PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
   }
 
   const refreshToken = request.cookies.get("refreshToken");
-  
+
   if (!refreshToken) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);

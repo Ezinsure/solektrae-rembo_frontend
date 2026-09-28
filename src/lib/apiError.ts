@@ -17,3 +17,16 @@ export const handleApiError = (error: unknown) => {
     description: "An unexpected error occurred.",
   });
 };
+
+export const formatDateTime = (date?: string | null) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleString("en-RW", {
+    timeZone: "Africa/Kigali",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};

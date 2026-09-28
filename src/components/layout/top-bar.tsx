@@ -13,16 +13,13 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CircleAlertIcon, CircleDashedIcon } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetMe, useLogout } from "@/hooks/useAuth";
 import { getInitials } from "@/helper";
+import { canSeeLink, NAV_LINKS } from "../../config/nav";
 
-const NAV_LINKS: { href: string; label: string }[] = [
-  // { label: "Dashboard", href: "/admin" },
-  { label: "Customers", href: "/admin/customers" },
-  { label: "Settings", href: "/admin/settings" },
-];
+
 
 const TopNav = () => {
   const pathname = usePathname();
@@ -31,10 +28,12 @@ const TopNav = () => {
 
   const initials = getInitials(user?.names);
 
+  const visibleLinks = NAV_LINKS.filter((link) => canSeeLink(link, user?.role));
+
   return (
     <header className="w-full bg-white max-w-[98%] mx-auto container my-3 rounded-2xl">
       <div className=" flex h-14 items-center justify-between px-6">
-        <Link href="/admin/customers" className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Image
             src={IremboLogo}
             alt="Irembo Logo"
@@ -42,9 +41,9 @@ const TopNav = () => {
             height={34}
             priority
           />
-        </Link>
+        </div>
         <nav className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive =
               link.href === "/admin/customers"
                 ? pathname === "/admin/customers"
@@ -57,7 +56,7 @@ const TopNav = () => {
                 className={cn(
                   "text-sm font-medium transition-colors",
                   isActive
-                    ? "text-foreground bg-[#004ea420] px-4 py-1.5 rounded-2xl "
+                    ? "text-foreground bg-[#004ea430] px-4 py-1.5 rounded-2xl"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -65,13 +64,14 @@ const TopNav = () => {
               </Link>
             );
           })}
+
         </nav>
         <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className="h-auto p-1 pr-3 gap-3 data-[state=open]:bg-accent">
-                <Avatar>
-                  <AvatarFallback>{initials}</AvatarFallback>
+          <NavigationMenuList >
+            <NavigationMenuItem >
+              <NavigationMenuTrigger className="'h-auto p-1 pr-3 gap-4 data-[state=open]:bg-accent">
+                <Avatar >
+                  <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col items-start leading-tight">
                   <span className="text-base font-medium">
@@ -84,7 +84,7 @@ const TopNav = () => {
                 </div>
               </NavigationMenuTrigger>
               <NavigationMenuContent>
-                <ul className="grid w-[220px] gap-1 p-2">
+                <ul className="grid w-[180px] gap-1 p-2">
                   <li>
                     <NavigationMenuLink
                       render={
@@ -95,7 +95,7 @@ const TopNav = () => {
                             "hover:bg-accent hover:text-accent-foreground",
                           )}
                         >
-                          <CircleAlertIcon className="h-4 w-4" />
+                          <User className="h-4 w-4 font-semibold" />
                           Profile
                         </Link>
                       }
@@ -116,7 +116,7 @@ const TopNav = () => {
                             "disabled:pointer-events-none disabled:opacity-50",
                           )}
                         >
-                          <CircleDashedIcon className="h-4 w-4" />
+                          <LogOut className="h-4 w-4 font-semibold" />
                           {logout.isPending ? "Logging out..." : "Log out"}
                         </button>
                       }
