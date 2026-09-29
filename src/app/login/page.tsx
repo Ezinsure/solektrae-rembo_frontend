@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/hooks/useAuth";
 import { LoginFormValues, loginSchema } from "@/lib/form-schema";
 import { Suspense, useState } from "react";
@@ -12,10 +11,7 @@ import IremboLogo from "../../../public/favicon.ico";
 
 function LoginForm() {
   const login = useLogin();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const redirectTo = searchParams.get("from") || "/admin/customers";
 
   const {
     register,
@@ -30,11 +26,7 @@ function LoginForm() {
     },
   });
   const onSubmit = (data: LoginFormValues) => {
-    login.mutate(data, {
-      onSuccess: () => {
-        router.push(redirectTo);
-      },
-    });
+    login.mutate(data);
   };
 
   return (
