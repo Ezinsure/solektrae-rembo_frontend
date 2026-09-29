@@ -45,7 +45,6 @@ const CustomersView = () => {
             page,
             limit: pageSize,
         });
-
     const totalItems = customerData?.total ?? 0;
 
     const filteredData = {

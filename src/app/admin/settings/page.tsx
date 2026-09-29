@@ -176,7 +176,7 @@ const SettingsView = () => {
             <FormModal open={editOpen} onOpenChange={setEditOpen} title="Edit User">
                 {selectedUser && (
                     <UserForm
-                        key={selectedUser.id} // remounts so defaultValues refresh per user
+                        key={selectedUser.id} 
                         user={selectedUser}
                         onSuccess={() => setEditOpen(false)}
                     />

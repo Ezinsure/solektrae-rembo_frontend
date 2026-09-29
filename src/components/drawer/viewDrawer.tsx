@@ -38,9 +38,9 @@ export function ViewDrawer({
                     {children}
                 </div>
                 <DrawerFooter>
-                    <DrawerClose>
-                        <Button variant="outline">Close</Button>
-                    </DrawerClose>
+                    <DrawerClose
+                        render={<Button variant="outline">Close</Button>}
+                    />
                 </DrawerFooter>
             </DrawerContent>
         </Drawer>
