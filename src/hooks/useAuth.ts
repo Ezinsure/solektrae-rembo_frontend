@@ -5,10 +5,14 @@ import { toast } from "sonner";
 import { handleApiError } from "@/lib/apiError";
 import { clearAccessToken, setAccessToken } from "@/lib/httpRequest";
 import { AuthService } from "@/services/authService";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("from") || "/admin/customers";
+
   return useMutation({
     mutationFn: (data: any) => AuthService.login(data),
     onSuccess: (response) => {
@@ -18,6 +22,7 @@ export const useLogin = () => {
       toast.success("Welcome back!", {
         description: "You're all set. Have a great day!",
       });
+      router.replace(redirectTo);
     },
     onError: (error) => {
       handleApiError(error);
