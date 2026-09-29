@@ -68,7 +68,7 @@ const CustomersTable = ({
                         <TableHead className="font-semibold">Email</TableHead>
                         <TableHead className="font-semibold">Phone</TableHead>
                         <TableHead className="font-semibold">Service</TableHead>
-                        <TableHead className="font-semibold">District</TableHead>
+                        {/* <TableHead className="font-semibold">District</TableHead> */}
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold ">Actions</TableHead>
                     </TableRow>
@@ -101,8 +101,8 @@ const CustomersTable = ({
                                 <TableCell>{data?.names}</TableCell>
                                 <TableCell>{data?.email}</TableCell>
                                 <TableCell>{data?.phoneNumber}</TableCell>
-                                <TableCell>{data?.service}</TableCell>
-                                <TableCell>{data?.district}</TableCell>
+                                <TableCell className="capitalize">{data?.service}</TableCell>
+                                {/* <TableCell>{data?.district ?? 'N/A'}</TableCell> */}
                                 <TableCell>
                                     <StatusBadge status={data?.status} />
                                 </TableCell>
