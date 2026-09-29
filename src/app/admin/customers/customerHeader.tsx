@@ -1,4 +1,3 @@
-// CustomersHeader.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -11,13 +10,12 @@ import { useGetAllCustomers } from "@/hooks/useCustomer";
 import { DateRangePicker } from "@/components/dateRange";
 
 function isWithinRange(dateStr: string, range: DateRange | undefined) {
-    if (!range?.from) return true; // no range selected — include everything
+    if (!range?.from) return true; 
     const date = new Date(dateStr);
     const from = new Date(range.from);
     from.setHours(0, 0, 0, 0);
 
     if (!range.to) {
-        // Only a start date picked — match that single day
         const to = new Date(range.from);
         to.setHours(23, 59, 59, 999);
         return date >= from && date <= to;
@@ -141,5 +139,4 @@ const CustomersHeader = ({
         </div>
     );
 };
-
 export default CustomersHeader;

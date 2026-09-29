@@ -24,30 +24,32 @@ export function DateRangePicker({
 }) {
     return (
         <Popover>
-            <PopoverTrigger>
-                <Button
-                    variant="outline"
-                    className={cn(
-                        "w-[240px] justify-start text-left font-normal",
-                        !value && "text-muted-foreground",
-                        className
-                    )}
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value?.from ? (
-                        value.to ? (
-                            <>
-                                {format(value.from, "LLL dd, y")} –{" "}
-                                {format(value.to, "LLL dd, y")}
-                            </>
+            <PopoverTrigger
+                render={
+                    <Button
+                        variant="outline"
+                        className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            !value && "text-muted-foreground",
+                            className
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {value?.from ? (
+                            value.to ? (
+                                <>
+                                    {format(value.from, "LLL dd, y")} –{" "}
+                                    {format(value.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(value.from, "LLL dd, y")
+                            )
                         ) : (
-                            format(value.from, "LLL dd, y")
-                        )
-                    ) : (
-                        <span>Pick a date range</span>
-                    )}
-                </Button>
-            </PopoverTrigger>
+                            <span>Pick a date range</span>
+                        )}
+                    </Button>
+                }
+            />
             <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                     mode="range"
