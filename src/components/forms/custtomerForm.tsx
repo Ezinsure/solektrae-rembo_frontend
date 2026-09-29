@@ -20,7 +20,10 @@ import { cn } from "@/lib/utils";
 import {
     iremboSchema,
     type IremboFormValues,
-    STEP_FIELDS,
+    getStep1Fields,
+    getStep2Fields,
+    STEP2_ALL_FIELDS,
+    FIELD_META,
 } from "@/lib/form-schema";
 import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useCustomer";
 import IremboLogo from "../../assets/logos/irembo-logo.png";
@@ -91,7 +94,7 @@ export function CustomerForm({
             village: customer?.village ?? "",
             height: customer?.height ?? "",
             hovName: customer?.hovName ?? "",
-            hovNumber: customer?.hovNumber ?? ""
+            hovNumber: customer?.hovNumber ?? "",
         },
     });
 
@@ -100,7 +103,7 @@ export function CustomerForm({
     const serviceLabel =
         selectedOption === "others"
             ? values.service || "—"
-            : SERVICES.find((s) => s.value === values.service)?.label ?? "—";
+            : (SERVICES.find((s) => s.value === values.service)?.label ?? "—");
 
     const handleOptionChange = (option: string) => {
         setSelectedOption(option);
@@ -110,7 +113,10 @@ export function CustomerForm({
     };
 
     const goNext = async () => {
-        const fields = step === 1 ? STEP_FIELDS[1] : STEP_FIELDS[2];
+        const fields =
+            step === 1
+                ? getStep1Fields(selectedOption)
+                : getStep2Fields(values.service);
         const ok = await trigger(fields as any, { shouldFocus: true });
         if (ok) setStep((s) => (s + 1) as Step);
     };
@@ -125,7 +131,7 @@ export function CustomerForm({
         const payload = {
             ...rest,
             names: name,
-            phoneNumber: phone
+            phoneNumber: phone,
         };
 
         const mutation = isEdit
@@ -142,10 +148,10 @@ export function CustomerForm({
                     onError: (error: any) => {
                         setSubmitError(
                             error?.response?.data?.message ??
-                            "Something went wrong. Please try again."
+                            "Something went wrong. Please try again.",
                         );
                     },
-                }
+                },
             )
             : createCustomer.mutate(payload, {
                 onSuccess: () => {
@@ -161,7 +167,7 @@ export function CustomerForm({
                 onError: (error: any) => {
                     setSubmitError(
                         error?.response?.data?.message ??
-                        "Something went wrong. Please try again."
+                        "Something went wrong. Please try again.",
                     );
                 },
             });
@@ -186,14 +192,14 @@ export function CustomerForm({
                                 "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium",
                                 step === n
                                     ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground"
+                                    : "bg-muted text-muted-foreground",
                             )}
                         >
                             {n}
                         </span>
                         <span
                             className={cn(
-                                step === n ? "font-medium" : "text-muted-foreground"
+                                step === n ? "font-medium" : "text-muted-foreground",
                             )}
                         >
                             {n === 1 ? "Personal" : n === 2 ? "Location" : "Submit"}
@@ -203,9 +209,11 @@ export function CustomerForm({
             </div>
 
             <div className="bg-white max-w-2xl container mx-auto rounded-sm p-8 px-10">
-                {pathname === "/" && (<header className="bg-[#E9E9EB] p-4 max-w-58 rounded-sm mx-auto my-3 mb-10">
-                    <Image src={IremboLogo} alt="iremboLogo" />
-                </header>)}
+                {pathname === "/" && (
+                    <header className="bg-[#E9E9EB] p-4 max-w-58 rounded-sm mx-auto my-3 mb-10">
+                        <Image src={IremboLogo} alt="iremboLogo" />
+                    </header>
+                )}
                 <form onSubmit={handleSubmit(onSubmit)}>
                     {step === 1 && (
                         <FieldSet>
@@ -269,46 +277,11 @@ export function CustomerForm({
                                                     borderRadius: "0.5rem 0 0 0.5rem",
                                                 }}
                                             />
-
-
                                         )}
                                     />
                                     {errors.phone && (
                                         <p className="text-xs text-red-500 mt-1">
                                             {errors.phone.message}
-                                        </p>
-                                    )}
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="fatherName" className="text-sm opacity-80">
-                                        Father&apos;s Names / Noms du père / Amazina ya Se  *
-                                    </FieldLabel>
-                                    <Input id="fatherName" {...register("fatherName")} />
-                                    {errors.fatherName && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.fatherName.message}
-                                        </p>
-                                    )}
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="motherName" className="text-sm opacity-80">
-                                        Mother&apos;s Names / Noms de la mère / Amazina ya Nyina *
-                                    </FieldLabel>
-                                    <Input id="motherName" {...register("motherName")} />
-                                    {errors.motherName && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.motherName.message}
-                                        </p>
-                                    )}
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="spouseName" className="text-sm opacity-80">
-                                        Spouse&apos;s Name / Nom du conjoint ~ de la conjointe / Izina ry’Uwo Bashakanye *
-                                    </FieldLabel>
-                                    <Input id="spouseName" {...register("spouseName")} />
-                                    {errors.spouseName && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.spouseName.message}
                                         </p>
                                     )}
                                 </Field>
@@ -333,27 +306,6 @@ export function CustomerForm({
                                             </FieldLabel>
                                         ))}
                                     </RadioGroup>
-
-                                    {selectedOption === "others" && (
-                                        <div className="mt-3">
-                                            <FieldLabel
-                                                htmlFor="service"
-                                                className="text-sm opacity-80 mb-1"
-                                            >
-                                                Service Name / Nom du Service / Izina rya Serivisi *
-                                            </FieldLabel>
-                                            <Input
-                                                id="service"
-                                                placeholder=""
-                                                {...register("service")}
-                                            />
-                                        </div>
-                                    )}
-                                    {errors.service && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.service.message}
-                                        </p>
-                                    )}
                                 </Field>
                             </FieldGroup>
 
@@ -368,106 +320,33 @@ export function CustomerForm({
                     {step === 2 && (
                         <FieldSet>
                             <FieldGroup>
-                                <Field>
-                                    <FieldLabel htmlFor="height" className="text-sm opacity-80">
-                                        Height / Taille / Uburebure (Cm) *
-                                    </FieldLabel>
-                                    <Input id="height" type="number" {...register("height")} />
-                                    {errors.height && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.height.message}
-                                        </p>
-                                    )}
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="hovName" className="text-sm opacity-80">
-                                        Name of the Head of Village / Nom du chef du village /
-                                        Amazina y&apos;umukuru w&apos;umudugudu *
-                                    </FieldLabel>
-                                    <Input id="hovName" {...register("hovName")} />
-                                    {errors.hovName && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.hovName.message}
-                                        </p>
-                                    )}
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="villageHeadPhone" className="text-sm opacity-80">
-                                        Phone Number of the Head of Village / Numéro de téléphone du
-                                        chef du village / Telefone y&apos;umukuru w&apos;umudugudu *
-                                    </FieldLabel>
-                                    <Input
-                                        id="villageHeadPhone"
-                                        type="tel"
-                                        {...register("hovNumber")}
-                                    />
-                                    {errors.hovNumber && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.hovNumber.message}
-                                        </p>
-                                    )}
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="district" className="text-sm opacity-80">
-                                        District / Akarere *
-                                    </FieldLabel>
-                                    <Input id="district" {...register("district")} />
-                                    {errors.district && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.district.message}
-                                        </p>
-                                    )}
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="sector" className="text-sm opacity-80">
-                                        Sector / Umurenge *
-                                    </FieldLabel>
-                                    <Input id="sector" {...register("sector")} />
-                                    {errors.sector && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.sector.message}
-                                        </p>
-                                    )}
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="cell" className="text-sm opacity-80">
-                                        Cell / Akagari *
-                                    </FieldLabel>
-                                    <Input id="cell" {...register("cell")} />
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel htmlFor="village" className="text-sm opacity-80">
-                                        Village / Umudugudu *
-                                    </FieldLabel>
-                                    <Input id="village" {...register("village")} />
-                                    {errors.village && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.village.message}
-                                        </p>
-                                    )}
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="street" className="text-sm opacity-80">
-                                        Street Number / Numéro de rue / Nomero y’Umuhanda *
-                                    </FieldLabel>
-                                    <Input id="street" {...register("street")} />
-                                    {errors.street && (
-                                        <p className="text-xs text-red-500 mt-1">
-                                            {errors.street.message}
-                                        </p>
-                                    )}
-                                </Field>
+                                {STEP2_ALL_FIELDS.filter((key) =>
+                                    getStep2Fields(values.service).includes(key),
+                                ).map((key) => {
+                                    const meta = FIELD_META[key];
+                                    return (
+                                        <Field key={key}>
+                                            <FieldLabel htmlFor={key} className="text-sm opacity-80">
+                                                {meta.label}
+                                            </FieldLabel>
+                                            <Input
+                                                id={key}
+                                                type={meta.type ?? "text"}
+                                                {...register(key)}
+                                            />
+                                            {errors[key] && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {errors[key]?.message}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    );
+                                })}
                             </FieldGroup>
 
                             <div className="flex justify-between mt-6">
                                 <Button type="button" variant="outline" onClick={goBack}>
-                                    <ArrowLeft />    Back
+                                    <ArrowLeft /> Back
                                 </Button>
                                 <Button type="button" onClick={goNext}>
                                     Next <ArrowRight />
@@ -484,42 +363,37 @@ export function CustomerForm({
                             </FieldDescription>
 
                             <div className="mt-6 rounded-md border bg-muted/40 p-4 text-sm space-y-4">
-                                <p><span className="font-medium">Name / Amazina:</span> {values.name || "—"}</p>
-                                <p><span className="font-medium">Email / Imeli:</span> {values.email || "—"}</p>
-                                <p><span className="font-medium">Phone Number / Numero ya Telefone:</span> {values.phone || "—"}</p>
-                                <p><span className="font-medium">Service / Serivisi:</span> {serviceLabel}</p>
                                 <p>
-                                    <span className="font-medium">Father&apos;s Names / Amazina ya Se:</span>{" "}
-                                    {values.fatherName || "—"}
+                                    <span className="font-medium">Name / Amazina:</span>{" "}
+                                    {values.name || "—"}
                                 </p>
                                 <p>
-                                    <span className="font-medium">Mother&apos;s Names / Amazina ya Nyina:</span>{" "}
-                                    {values.motherName || "—"}
+                                    <span className="font-medium">Email / Imeli:</span>{" "}
+                                    {values.email || "—"}
                                 </p>
                                 <p>
-                                    <span className="font-medium">Spouse&apos;s Name / Izina ry’Uwo Bashakanye:</span>{" "}
-                                    {values.spouseName || "—"}
+                                    <span className="font-medium">Phone Number:</span>{" "}
+                                    {values.phone || "—"}
                                 </p>
                                 <p>
-                                    <span className="font-medium">Height:</span>{" "}
-                                    {values.height ? `${values.height} cm` : "—"}
+                                    <span className="font-medium">Service / Serivisi:</span>{" "}
+                                    {serviceLabel}
                                 </p>
-                                <p>
-                                    <span className="font-medium">Head of Village:</span>{" "}
-                                    {values.hovName || "—"} ({values.hovNumber || "—"})
-                                </p>
-                                <p>
-                                    <span className="font-medium">District :</span> {values.district || "—"} /{" "}
-                                    <span className="font-medium">Sector :</span> {values.sector || "—"}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Cell :</span> {values.cell || "—"} /{" "}
-                                    <span className="font-medium">Village :</span> {values.village || "—"}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Street Number :</span>{" "}
-                                    {values.street || "—"}
-                                </p>
+
+                                {STEP2_ALL_FIELDS.filter(
+                                    (key) =>
+                                        key !== "service" &&
+                                        getStep2Fields(values.service).includes(key),
+                                ).map((key) => (
+                                    <p key={key}>
+                                        <span className="font-medium">
+                                            {FIELD_META[key].label.split(" / ")[0].replace(" *", "")}:
+                                        </span>{" "}
+                                        {key === "height" && values[key]
+                                            ? `${values[key]} cm`
+                                            : values[key] || "—"}
+                                    </p>
+                                ))}
                             </div>
 
                             {submitError && (
@@ -540,7 +414,11 @@ export function CustomerForm({
                                     Back
                                 </Button>
                                 <div className="flex gap-2">
-                                    <Button type="button" variant="outline" onClick={handleCancel}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleCancel}
+                                    >
                                         Cancel
                                     </Button>
                                     <Button type="submit" disabled={isPending}>
@@ -554,6 +432,8 @@ export function CustomerForm({
                             </div>
                         </FieldSet>
                     )}
-                </form></div></main>
+                </form>
+            </div>
+        </main>
     );
 }
