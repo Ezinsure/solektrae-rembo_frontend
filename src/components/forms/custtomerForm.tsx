@@ -316,24 +316,59 @@ export function CustomerForm({
                             </div>
                         </FieldSet>
                     )}
-
                     {step === 2 && (
                         <FieldSet>
                             <FieldGroup>
                                 {STEP2_ALL_FIELDS.filter((key) =>
-                                    getStep2Fields(values.service).includes(key),
+                                    getStep2Fields(values.service).includes(key)
                                 ).map((key) => {
                                     const meta = FIELD_META[key];
+
+                                    if (meta.type === "phone") {
+                                        return (
+                                            <Field key={key}>
+                                                <FieldLabel htmlFor={key} className="text-sm opacity-80">
+                                                    {meta.label}
+                                                </FieldLabel>
+                                                <Controller
+                                                    name={key}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <PhoneInput
+                                                            country="rw"
+                                                            value={field.value}
+                                                            onChange={(value) => field.onChange("+" + value)}
+                                                            inputStyle={{
+                                                                width: "100%",
+                                                                height: "33px",
+                                                                background: "white",
+                                                                color: "#111",
+                                                                border: "1px solid #d1d5db",
+                                                                borderRadius: "0 0.5rem 0.5rem 0",
+                                                            }}
+                                                            buttonStyle={{
+                                                                background: "white",
+                                                                border: "1px solid #d1d5db",
+                                                                borderRadius: "0.5rem 0 0 0.5rem",
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                                {errors[key] && (
+                                                    <p className="text-xs text-red-500 mt-1">
+                                                        {errors[key]?.message}
+                                                    </p>
+                                                )}
+                                            </Field>
+                                        );
+                                    }
+
                                     return (
                                         <Field key={key}>
                                             <FieldLabel htmlFor={key} className="text-sm opacity-80">
                                                 {meta.label}
                                             </FieldLabel>
-                                            <Input
-                                                id={key}
-                                                type={meta.type ?? "text"}
-                                                {...register(key)}
-                                            />
+                                            <Input id={key} type={meta.type ?? "text"} {...register(key)} />
                                             {errors[key] && (
                                                 <p className="text-xs text-red-500 mt-1">
                                                     {errors[key]?.message}

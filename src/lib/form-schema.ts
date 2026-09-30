@@ -119,7 +119,7 @@ export const FIELD_META: Record<Step2Field, { label: string; type?: string }> =
     hovNumber: {
       label:
         "Phone Number of the Head of Village / Numéro de téléphone du chef du village / Telefone y'umukuru w'umudugudu *",
-      type: "tel",
+      type: "phone",
     },
     district: { label: "District / Akarere *" },
     sector: { label: "Sector / Umurenge *" },
