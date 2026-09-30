@@ -208,7 +208,7 @@ export function CustomerForm({
                 ))}
             </div>
 
-            <div className="bg-white max-w-xl container mx-auto rounded-sm px-10">
+            <div className="bg-white max-w-xl container mx-auto rounded-sm px-10 pb-8">
                 {pathname === "/" && (
                     <header className="max-w-60 rounded-sm mx-auto mb-2">
                         <Image src={IremboLogo} alt="iremboLogo" />
