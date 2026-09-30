@@ -26,7 +26,7 @@ import {
     FIELD_META,
 } from "@/lib/form-schema";
 import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useCustomer";
-import IremboLogo from "../../assets/logos/irembo-logo.png";
+import IremboLogo from "../../assets/logos/irembo-blue.png";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -183,8 +183,8 @@ export function CustomerForm({
     };
 
     return (
-        <main className="md:py-10">
-            <div className="flex items-center justify-between text-sm max-w-2xl container mx-auto my-6 mb-10">
+        <main className="md:pb-10">
+            <div className="flex items-center justify-between text-sm max-w-2xl container mx-auto my-6">
                 {[1, 2, 3].map((n) => (
                     <div key={n} className="flex items-center gap-2">
                         <span
@@ -208,9 +208,9 @@ export function CustomerForm({
                 ))}
             </div>
 
-            <div className="bg-white max-w-2xl container mx-auto rounded-sm p-8 px-10">
+            <div className="bg-white max-w-xl container mx-auto rounded-sm px-10">
                 {pathname === "/" && (
-                    <header className="bg-[#E9E9EB] p-4 max-w-58 rounded-sm mx-auto my-3 mb-10">
+                    <header className="max-w-60 rounded-sm mx-auto mb-2">
                         <Image src={IremboLogo} alt="iremboLogo" />
                     </header>
                 )}
@@ -226,7 +226,7 @@ export function CustomerForm({
                                     : "Please complete the form below."}
                             </FieldDescription>
 
-                            <FieldGroup className="mt-4">
+                            <FieldGroup className="mt-3">
                                 <Field>
                                     <FieldLabel htmlFor="name" className="text-sm opacity-80">
                                         Name / Nom / Amazina *
