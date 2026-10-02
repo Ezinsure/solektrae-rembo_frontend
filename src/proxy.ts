@@ -1,22 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/", "/login"];
+const PUBLIC_PATHS = ["/", "/login"];
+const AUTH_COOKIE = "logged_in"; 
+const HOME_AFTER_LOGIN = "/admin/customers";
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  if (PUBLIC_ROUTES.includes(pathname)) {
-    return NextResponse.next();
+  const { pathname, search } = request.nextUrl;
+  const loggedIn = request.cookies.get(AUTH_COOKIE)?.value === "1";
+  const isPublic = PUBLIC_PATHS.includes(pathname);
+
+ 
+  if (!loggedIn && !isPublic) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname + search);
+    return NextResponse.redirect(loginUrl);
   }
 
-  const refreshToken = request.cookies.get("refreshToken");
-
-  if (!refreshToken) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (loggedIn && pathname === "/login") {
+    return NextResponse.redirect(new URL(HOME_AFTER_LOGIN, request.url));
   }
   return NextResponse.next();
 }
+
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|txt|xml|woff2?)$).*)",
+  ],
 };

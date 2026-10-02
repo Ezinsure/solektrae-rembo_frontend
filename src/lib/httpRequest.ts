@@ -2,8 +2,13 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 let accessToken: string | null = null;
 
+const SESSION_FLAG = "logged_in";
+
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
+  if (typeof document !== "undefined" && token) {
+    document.cookie = `${SESSION_FLAG}=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  }
 };
 
 export const getAccessToken = () => {
@@ -12,6 +17,9 @@ export const getAccessToken = () => {
 
 export const clearAccessToken = () => {
   accessToken = null;
+  if (typeof document !== "undefined") {
+    document.cookie = `${SESSION_FLAG}=; path=/; max-age=0; SameSite=Lax`;
+  }
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_SERVER_URL;
