@@ -21,7 +21,6 @@ export const handleApiError = (error: unknown) => {
 export const formatDateTime = (date?: string | null) => {
   if (!date) return "-";
   return new Date(date).toLocaleString("en-RW", {
-    timeZone: "Africa/Kigali",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import HttpRequest from "@/lib/httpRequest";
+import PasswordInput from "../ui/passwdInput";
 
 const CHANGE_PASSWORD_URL = "/auth/change-password";
 
@@ -91,7 +92,6 @@ export default function ProfileDialog({ open, onOpenChange, user }: Props) {
                 {mode === "info" ? (
                     <>
                         <div className="h-14 " />
-
                         <div className="px-6 pb-6">
                             <div className="-mt-11 mb-3 flex h-[88px] w-[88px] items-center justify-center rounded-full border-4 border-background bg-primary text-2xl font-semibold text-primary-foreground shadow-md">
                                 {getInitials(user?.names)}
@@ -103,8 +103,6 @@ export default function ProfileDialog({ open, onOpenChange, user }: Props) {
                                     {user?.email ?? "Your account information"}
                                 </DialogDescription>
                             </DialogHeader>
-
-
                             <div className="mt-3 flex flex-wrap gap-2">
                                 {user?.role && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium capitalize text-primary ring-1 ring-inset ring-primary/20">
@@ -132,8 +130,6 @@ export default function ProfileDialog({ open, onOpenChange, user }: Props) {
                                 <InfoRow icon={CalendarPlus} label="Member since" value={formatDate(user?.createdAt)} />
                                 <InfoRow icon={CalendarClock} label="Last updated" value={formatDate(user?.updatedAt)} />
                             </div>
-
-
                             <Button className="mt-5 w-full gap-2" onClick={() => setMode("password")}>
                                 <KeyRound className="h-4 w-4" />
                                 Change password
@@ -223,12 +219,12 @@ function ChangePasswordForm({ onCancel, onDone }: { onCancel: () => void; onDone
             <div className="grid gap-4 py-5">
                 <div className="grid gap-2">
                     <Label htmlFor="currentPassword">Current password</Label>
-                    <Input id="currentPassword" type="password" autoComplete="current-password"
+                    <PasswordInput id="currentPassword" type="password" autoComplete="current-password"
                         value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="newPassword">New password</Label>
-                    <Input id="newPassword" type="password" autoComplete="new-password"
+                    <PasswordInput id="newPassword" type="password" autoComplete="new-password"
                         value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
                 </div>
                 {error && (
