@@ -123,7 +123,7 @@ const CustomersTable = ({
                                                     <Eye className="h-4 w-4 mr-2" />
                                                     View
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onEdit(data)}>
+                                                <DropdownMenuItem disabled={data.status?.toLowerCase() !== "pending"} onClick={() => onEdit(data)}>
                                                     <Pencil className="h-4 w-4 mr-2" />
                                                     Edit
                                                 </DropdownMenuItem>
