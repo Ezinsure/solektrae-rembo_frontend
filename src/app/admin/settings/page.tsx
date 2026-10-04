@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useGetAllUsers } from "@/hooks/useUser";
+import { useDeleteUser, useGetAllUsers } from "@/hooks/useUser";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableFilters } from "@/components/ui/tableFilter";
 import { UsersStats } from "./users/userStats";
@@ -13,6 +13,8 @@ import { FormModal } from "@/components/modal/editModal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { UserForm } from "@/components/forms/userForm";
+import AdminPasswordDialog from "@/components/modal/ResetPasswd";
+import ConfirmDialog from "@/components/modal/deleteDialog";
 
 const ROLE_OPTIONS = [
     { label: "All roles", value: "all" },
@@ -21,14 +23,14 @@ const ROLE_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
-    { label: "All statuses", value: "all" },
+    { label: "All", value: "all" },
     { label: "Active", value: "active" },
     { label: "Inactive", value: "inactive" },
 ];
 
 const SettingsView = () => {
     const { data: userData, isLoading: userLoading } = useGetAllUsers();
-
+    const deleteUser = useDeleteUser();
     const [search, setSearch] = useState("");
     const [role, setRole] = useState("all");
     const [status, setStatus] = useState("all");
@@ -38,7 +40,8 @@ const SettingsView = () => {
     const [editOpen, setEditOpen] = useState(false);
     const [viewOpen, setViewOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
-
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [passwordOpen, setPasswordOpen] = useState(false);
 
     const users = userData?.data ?? [];
 
@@ -50,15 +53,14 @@ const SettingsView = () => {
                 u.email?.toLowerCase().includes(search.toLowerCase());
             const matchesRole = role === "all" || u.role === role;
             const matchesStatus =
-                status === "all" ||
-                (status === "active" ? u.isActive : !u.isActive);
+                status === "all" || (status === "active" ? u.isActive : !u.isActive);
             return matchesSearch && matchesRole && matchesStatus;
         });
     }, [users, search, role, status]);
 
     const paginatedUsers = filteredUsers.slice(
         (page - 1) * pageSize,
-        page * pageSize
+        page * pageSize,
     );
 
     return (
@@ -68,7 +70,7 @@ const SettingsView = () => {
             <div className="py-6 space-y-6">
                 <UsersStats users={users} isLoading={userLoading} />
 
-                <div className="flex justify-between my-8" >
+                <div className="flex justify-between my-8">
                     <Button onClick={() => setCreateOpen(true)}>
                         {" "}
                         <Plus />
@@ -101,7 +103,8 @@ const SettingsView = () => {
                                 placeholder: "Filter by status",
                             },
                         ]}
-                    /></div>
+                    />
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
                     {userLoading ? (
@@ -135,10 +138,12 @@ const SettingsView = () => {
                                     setEditOpen(true);
                                 }}
                                 onDelete={(user) => {
-                                    /* open delete confirm dialog */
+                                    setSelectedUser(user);
+                                    setDeleteOpen(true);
                                 }}
                                 onChangePassword={(user) => {
-                                    /* open change password modal */
+                                    setSelectedUser(user);
+                                    setPasswordOpen(true);
                                 }}
                             />
                         ))
@@ -168,7 +173,11 @@ const SettingsView = () => {
             )}
 
             {/* Create */}
-            <FormModal open={createOpen} onOpenChange={setCreateOpen} title="New User">
+            <FormModal
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                title="New User"
+            >
                 <UserForm onSuccess={() => setCreateOpen(false)} />
             </FormModal>
 
@@ -176,14 +185,37 @@ const SettingsView = () => {
             <FormModal open={editOpen} onOpenChange={setEditOpen} title="Edit User">
                 {selectedUser && (
                     <UserForm
-                        key={selectedUser.id} 
+                        key={selectedUser.id}
                         user={selectedUser}
                         onSuccess={() => setEditOpen(false)}
                     />
                 )}
             </FormModal>
+
+            {/* delete user */}
+            <ConfirmDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                variant="destructive"
+                title="Delete user?"
+                description={
+                    <>
+                        <span className="font-medium text-foreground">
+                            {selectedUser?.names}
+                        </span>{" "}
+                        will lose access immediately.
+                    </>
+                }
+                onConfirm={() => deleteUser.mutateAsync(selectedUser!.id)}
+            />
+
+            {/* update password */}
+            <AdminPasswordDialog
+                open={passwordOpen}
+                onOpenChange={setPasswordOpen}
+                user={selectedUser}
+            />
         </div>
     );
 };
-
 export default SettingsView;

@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils";
 import { useGetMe, useLogout } from "@/hooks/useAuth";
 import { getInitials } from "@/helper";
 import { canSeeLink, NAV_LINKS } from "../../config/nav";
-
-
+import { useState } from "react";
+import ProfileDialog from "../modal/profileModal";
 
 const TopNav = () => {
   const pathname = usePathname();
+  const [profileOpen, setProfileOpen] = useState(false);
   const { data: user } = useGetMe();
   const logout = useLogout();
 
@@ -31,7 +32,7 @@ const TopNav = () => {
   const visibleLinks = NAV_LINKS.filter((link) => canSeeLink(link, user?.role));
 
   return (
-    <header className="w-full bg-white max-w-[98%] mx-auto container my-3 rounded-2xl">
+    <><header className="w-full bg-white max-w-[98%] mx-auto container my-3 rounded-2xl">
       <div className=" flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <Image
@@ -39,15 +40,13 @@ const TopNav = () => {
             alt="Irembo Logo"
             width={34}
             height={34}
-            priority
-          />
+            priority />
         </div>
         <nav className="hidden md:flex items-center gap-8">
           {visibleLinks.map((link) => {
-            const isActive =
-              link.href === "/admin/customers"
-                ? pathname === "/admin/customers"
-                : pathname.startsWith(link.href);
+            const isActive = link.href === "/admin/customers"
+              ? pathname === "/admin/customers"
+              : pathname.startsWith(link.href);
 
             return (
               <Link
@@ -57,7 +56,7 @@ const TopNav = () => {
                   "text-sm font-medium transition-colors",
                   isActive
                     ? "text-foreground bg-[#004ea430] px-4 py-1.5 rounded-2xl"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {link.label}
@@ -67,10 +66,10 @@ const TopNav = () => {
 
         </nav>
         <NavigationMenu>
-          <NavigationMenuList >
-            <NavigationMenuItem >
+          <NavigationMenuList>
+            <NavigationMenuItem>
               <NavigationMenuTrigger className="'h-auto p-1 pr-3 gap-4 data-[state=open]:bg-accent">
-                <Avatar >
+                <Avatar>
                   <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col items-start leading-tight">
@@ -86,41 +85,49 @@ const TopNav = () => {
               <NavigationMenuContent>
                 <ul className="grid w-[180px] gap-1 p-2">
                   <li>
-                    <NavigationMenuLink
-                      render={
-                        <Link
-                          href="/profile"
-                          className={cn(
-                            "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-                            "hover:bg-accent hover:text-accent-foreground",
-                          )}
-                        >
-                          <User className="h-4 w-4 font-semibold" />
-                          Profile
-                        </Link>
-                      }
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setProfileOpen(true)}
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-left",
+                        "hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <User className="h-4 w-4 font-semibold" />
+                      Profile
+                    </button>
+                    {/* <NavigationMenuLink
+      render={
+        <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+            "hover:bg-accent hover:text-accent-foreground",
+          )}
+        >
+          <User className="h-4 w-4 font-semibold" />
+          Profile
+        </Link>
+      }
+    /> */}
                   </li>
                   <li>
                     <NavigationMenuLink
-                      render={
-                        <button
-                          type="button"
-                          onClick={() => {
-                            logout.mutate();
-                          }}
-                          disabled={logout.isPending}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-left",
-                            "hover:bg-accent hover:text-accent-foreground",
-                            "disabled:pointer-events-none disabled:opacity-50",
-                          )}
-                        >
-                          <LogOut className="h-4 w-4 font-semibold" />
-                          {logout.isPending ? "Logging out..." : "Log out"}
-                        </button>
-                      }
-                    />
+                      render={<button
+                        type="button"
+                        onClick={() => {
+                          logout.mutate();
+                        }}
+                        disabled={logout.isPending}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-left",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          "disabled:pointer-events-none disabled:opacity-50"
+                        )}
+                      >
+                        <LogOut className="h-4 w-4 font-semibold" />
+                        {logout.isPending ? "Logging out..." : "Log out"}
+                      </button>} />
                   </li>
                 </ul>
               </NavigationMenuContent>
@@ -128,7 +135,7 @@ const TopNav = () => {
           </NavigationMenuList>
         </NavigationMenu>
       </div>
-    </header>
+    </header><ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} /></>
   );
 };
 export default TopNav;

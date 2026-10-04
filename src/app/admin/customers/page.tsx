@@ -20,7 +20,7 @@ import { TableFilters } from "@/components/ui/tableFilter";
 import { DateRange } from "react-day-picker";
 
 const STATUS_OPTIONS = [
-    { label: "All statuses", value: "all" },
+    { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
     { label: "Completed", value: "completed" },
     { label: "Cancelled", value: "cancelled" },
