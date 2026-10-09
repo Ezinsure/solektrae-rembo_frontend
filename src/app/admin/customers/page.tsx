@@ -61,7 +61,7 @@ const CustomersView = () => {
     };
 
     return (
-        <div>
+        <div className=" min-h-[83vh]">
             <CustomersHeader
                 dateRange={dateRange}
                 onDateRangeChange={setDateRange}
@@ -92,7 +92,7 @@ const CustomersView = () => {
                     ]}
                 />
             </div>
-            <div className="py-2">
+            <div className="py-2 scroll-auto">
                 <CustomersTable
                     // customerData={customerData}
                     customerLoading={customerLoading}
