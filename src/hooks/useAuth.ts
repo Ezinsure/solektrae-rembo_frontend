@@ -11,7 +11,7 @@ export const useLogin = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("from") || "/admin/customers";
+  const redirectTo = searchParams.get("from") || "/admin";
 
   return useMutation({
     mutationFn: (data: any) => AuthService.login(data),

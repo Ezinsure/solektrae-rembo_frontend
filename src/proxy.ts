@@ -1,15 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/", "/login"];
-const AUTH_COOKIE = "logged_in"; 
-const HOME_AFTER_LOGIN = "/admin/customers";
+const AUTH_COOKIE = "logged_in";
+const HOME_AFTER_LOGIN = "/admin/dashboard";
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const loggedIn = request.cookies.get(AUTH_COOKIE)?.value === "1";
   const isPublic = PUBLIC_PATHS.includes(pathname);
 
- 
   if (!loggedIn && !isPublic) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname + search);
@@ -19,6 +18,11 @@ export function proxy(request: NextRequest) {
   if (loggedIn && pathname === "/login") {
     return NextResponse.redirect(new URL(HOME_AFTER_LOGIN, request.url));
   }
+
+  if (loggedIn && pathname === "/admin") {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  }
+
   return NextResponse.next();
 }
 

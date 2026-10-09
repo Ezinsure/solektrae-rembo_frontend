@@ -3,7 +3,7 @@ import HttpRequest from "@/lib/httpRequest";
 const BASE = "/users";
 
 export const UserService = {
-  getAll: (params?: any) =>
+  getAll: (params?: Record<string, string | number | boolean>) =>
     HttpRequest.get(BASE, {
       params,
     }),

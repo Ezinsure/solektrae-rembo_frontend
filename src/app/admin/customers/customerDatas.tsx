@@ -61,7 +61,7 @@ const CustomersTable = ({
     return (
         <>
             <Table>
-                <TableHeader className="bg-[#E9E9EB] rounded-t-lg!">
+                <TableHeader className="bg-] rounded-t-lg!">
                     <TableRow>
                         <TableHead className="font-semibold">Date</TableHead>
                         <TableHead className="font-semibold">Names</TableHead>
