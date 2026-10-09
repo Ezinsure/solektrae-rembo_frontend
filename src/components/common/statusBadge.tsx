@@ -44,3 +44,19 @@ export function StatusBadge({
         </Badge>
     );
 }
+
+export const actionMeta: any = {
+    create: { label: "Created", className: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" },
+    update: { label: "Updated", className: "bg-blue-50 text-blue-700 ring-blue-600/20" },
+    delete: { label: "Deleted", className: "bg-red-50 text-red-700 ring-red-600/20" },
+    restore: { label: "Restored", className: "bg-violet-50 text-violet-700 ring-violet-600/20" },
+    login: { label: "Signed in", className: "bg-gray-100 text-gray-700 ring-gray-500/15" },
+    logout: { label: "Signed out", className: "bg-gray-100 text-gray-700 ring-gray-500/15" },
+    login_failed: { label: "Failed login", className: "bg-amber-50 text-amber-700 ring-amber-600/20" },
+    password_reset: { label: "Password reset", className: "bg-amber-50 text-amber-700 ring-amber-600/20" },
+    password_change: { label: "Password changed", className: "bg-amber-50 text-amber-700 ring-amber-600/20" },
+};
+
+export const entityLabel: any = {
+    customer: "Customer", user: "User", role: "Role", service: "Service", company: "Company", auth: "Sign-in",
+};

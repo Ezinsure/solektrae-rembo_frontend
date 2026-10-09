@@ -44,8 +44,8 @@ const TopNav = () => {
         </div>
         <nav className="hidden md:flex items-center gap-8">
           {visibleLinks.map((link) => {
-            const isActive = link.href === "/admin/customers"
-              ? pathname === "/admin/customers"
+            const isActive = link.href === "/admin/dashboard"
+              ? pathname === "/admin/dashboard"
               : pathname.startsWith(link.href);
 
             return (
@@ -96,20 +96,6 @@ const TopNav = () => {
                       <User className="h-4 w-4 font-semibold" />
                       Profile
                     </button>
-                    {/* <NavigationMenuLink
-      render={
-        <Link
-          href="/profile"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-            "hover:bg-accent hover:text-accent-foreground",
-          )}
-        >
-          <User className="h-4 w-4 font-semibold" />
-          Profile
-        </Link>
-      }
-    /> */}
                   </li>
                   <li>
                     <NavigationMenuLink

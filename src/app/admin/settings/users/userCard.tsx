@@ -37,7 +37,7 @@ export function UserCard({
         <div
             className={cn(
                 "group relative rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md border-l-4",
-                user.isActive ? "border-l-emerald-500" : "border-l-gray-300"
+                user.isActive ? "border-l-primary" : "border-l-gray-300"
             )}
         >
             <div className="flex items-start justify-between">
@@ -57,9 +57,9 @@ export function UserCard({
                     <DropdownMenuTrigger
                         render={
                             <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-60 group-hover:opacity-100"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 opacity-60 group-hover:opacity-100"
                             >
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
