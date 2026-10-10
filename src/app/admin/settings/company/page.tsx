@@ -1,83 +1,198 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Building2, Loader2, Trash2, Upload } from "lucide-react";
 import { PageHeader, Section, inputClass } from "@/components/settings/ui";
-import { sampleCompany, type Company } from "@/lib/settings/datas";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useCurrentCompany, useMyCompanies, useUpdateCompany } from "@/hooks/useCompany";
+import { useGetMe } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { useUploadCompanyLogo, useRemoveCompanyLogo } from "@/hooks/useCompany";
+
+const FIELDS = ["name", "email", "phoneNumber", "about"];
+
+const toForm = (c: any) => ({
+    name: c?.name ?? "",
+    email: c?.email ?? "",
+    phoneNumber: c?.phoneNumber ?? "",
+    about: c?.about ?? "",
+});
+
+const MAX_LOGO_MB = 2;
+const LOGO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const CompanyProfilePage = () => {
-    const [saved, setSaved] = useState<Company>(sampleCompany); // TODO: load from API
-    const [form, setForm] = useState<Company>(sampleCompany);
-    const [error, setError] = useState<string | null>(null);
+    const { data: company, isLoading, isError } = useCurrentCompany();
+    const { data: companies = [] } = useMyCompanies();
+    const updateCompany = useUpdateCompany();
+    const { data: user } = useGetMe();
+    const hasAccess = ["dev", "admin"].includes(user?.role ?? "");
+    const [form, setForm] = useState<any>(toForm(null));
+    const uploadLogo = useUploadCompanyLogo();
+    const removeLogo = useRemoveCompanyLogo();
     const fileRef = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(null);
 
-    const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(saved), [form, saved]);
-    const set = <K extends keyof Company>(k: K, v: Company[K]) => setForm((f) => ({ ...f, [k]: v }));
+    const logoBusy = uploadLogo.isPending || removeLogo.isPending;
+    const logoSrc = preview ?? company?.logoUrl ?? null;
 
-    const pickLogo = (file?: File) => {
-        setError(null);
+    // free the preview URL when it's replaced or the page closes
+    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+    const handlePickLogo = (e: any) => {
+        const file = e.target.files?.[0];
+        e.target.value = "";
         if (!file) return;
-        if (!file.type.startsWith("image/")) return setError("Please choose an image file.");
-        if (file.size > 2 * 1024 * 1024) return setError("The logo must be smaller than 2 MB.");
-        set("logo", URL.createObjectURL(file)); // TODO: upload to storage
+
+        if (!LOGO_TYPES.includes(file.type)) return toast.error("Only JPG, PNG or WEBP images are allowed");
+        if (file.size > MAX_LOGO_MB * 1024 * 1024) return toast.error(`Image must be ${MAX_LOGO_MB} MB or smaller`);
+
+        setPreview(URL.createObjectURL(file));
+        uploadLogo.mutate(file, { onSettled: () => setPreview(null) });
     };
 
+    const handleRemoveLogo = () => removeLogo.mutate();
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (company) setForm(toForm(company));
+    }, [company]);
+
+    const original: any = toForm(company);
+    const dirty = FIELDS.some((k) => form[k] !== original[k]);
+
+    // Only admins can PATCH /companies/current
+    const role = companies.find((c: any) => c.isCurrent)?.role;
+    const canEdit = role === "admin"; // TODO: match your UserRole value
+
+    const set = (key: string) => (e: any) =>
+        setForm((f: any) => ({ ...f, [key]: e.target.value }));
+
+    const handleSave = (e: any) => {
+        e.preventDefault();
+        if (!form.name.trim()) return;
+
+        // Send only the fields that changed. An empty optional field is sent as null.
+        const payload: any = {};
+        for (const k of FIELDS) {
+            if (form[k] !== original[k]) {
+                const v = form[k].trim();
+                payload[k] = v === "" && k !== "name" ? null : v;
+            }
+        }
+        updateCompany.mutate(payload);
+    };
+
+    const handleDiscard = () => setForm(toForm(company));
+
+    if (isLoading) {
+        return (
+            <div className="flex h-60 items-center justify-center text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+            </div>
+        );
+    }
+
+    if (isError || !company) {
+        return (
+            <p className="p-6 text-sm text-destructive">
+                Could not load the company profile. Please refresh the page.
+            </p>
+        );
+    }
+
     return (
-        <form onSubmit={(e) => { e.preventDefault(); setSaved(form); /* TODO: API */ }}>
-            <PageHeader title="Company profile" description="Shown on receipts, emails and across the system." />
-            <div className="lg:px-20 px-2">
-                <Section title="Logo" description="Square PNG or JPG, up to 2 MB.">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-                            {form.logo
-                                // eslint-disable-next-line @next/next/no-img-element
-                                ? <img src={form.logo} alt="Company logo" className="h-full w-full object-cover" />
-                                : <ImagePlus className="h-7 w-7 text-gray-400" />}
-                        </div>
-                        <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => pickLogo(e.target.files?.[0])} />
-                        <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
-                            {form.logo ? "Change logo" : "Upload logo"}
-                        </button>
-                        {form.logo && (
-                            <button type="button" className="btn-ghost text-red-600" onClick={() => set("logo", null)}>
-                                <Trash2 className="h-4 w-4" /> Remove
-                            </button>
+        <form onSubmit={handleSave} className="px-2 lg:px-20">
+            <PageHeader
+                title="Company profile"
+                description="This information appears on receipts, emails and customer pages."
+            />
+
+            <Section title="Logo">
+                <div className="flex items-center gap-4">
+                    <div className="relative flex size-16 items-center justify-center overflow-hidden rounded-xl border bg-muted">
+                        {logoSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={logoSrc} alt="Company logo" className="size-full object-cover" />
+                        ) : (
+                            <Building2 className="size-6 text-muted-foreground" />
+                        )}
+
+                        {logoBusy && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                                <Loader2 className="size-5 animate-spin text-gray-600" />
+                            </div>
                         )}
                     </div>
-                    {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
-                </Section>
 
-                <Section title="Details" description="Your company's name and contacts.">
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <Field className="sm:col-span-2">
-                            <FieldLabel htmlFor="Company name" className="text-sm opacity-80"></FieldLabel>
-                            <Input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} required />
-                        </Field>
-                        <Field>
-                            <FieldLabel htmlFor="Phone Number" className="text-sm opacity-80"></FieldLabel>
-                            <Input id="phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-                        </Field>
-                        <Field >
-                            <FieldLabel htmlFor="Email" className="text-sm opacity-80"></FieldLabel>
-                            <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
-                        </Field>
-                    </div>
-                </Section>
+                    {canEdit && (
+                        <div className="space-y-2">
+                            <div className="flex flex-wrap gap-2">
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    onChange={handlePickLogo}
+                                />
+                                <Button type="button" variant="outline" size="sm" disabled={logoBusy} onClick={() => fileRef.current?.click()}>
+                                    <Upload className="mr-2 size-4" />
+                                    {company?.logoUrl ? "Change logo" : "Upload logo"}
+                                </Button>
 
-                <Section title="About" description="A short description of what you do.">
+                                {company?.logoUrl && (
+                                    <Button type="button" variant="ghost" size="sm" disabled={logoBusy} onClick={handleRemoveLogo} className="text-red-600 hover:text-red-700">
+                                        <Trash2 className="mr-2 size-4" /> Remove
+                                    </Button>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">JPG, PNG or WEBP, up to {MAX_LOGO_MB} MB.</p>
+                        </div>
+                    )}
+                </div>
+            </Section>
+
+            <Section title="Details">
+                <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                        <FieldLabel htmlFor="About Company" className="text-sm opacity-80"></FieldLabel>
-                        <textarea id="about" rows={5} maxLength={500} className={`${inputClass} h-auto py-2`} value={form.about} onChange={(e) => set("about", e.target.value)} />
+                        <FieldLabel htmlFor="name">Company name</FieldLabel>
+                        <Input id="name" value={form.name} onChange={set("name")} required disabled={!canEdit} />
                     </Field>
-                </Section>
+                    <Field>
+                        <FieldLabel htmlFor="phoneNumber">Phone number</FieldLabel>
+                        <Input id="phoneNumber" value={form.phoneNumber} onChange={set("phoneNumber")} placeholder="+250 7xx xxx xxx" disabled={!canEdit} />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                        <FieldLabel htmlFor="email">Email</FieldLabel>
+                        <Input id="email" type="email" value={form.email} onChange={set("email")} disabled={!canEdit} />
+                    </Field>
+                    <Field className="sm:col-span-2">
+                        <FieldLabel htmlFor="about">About</FieldLabel>
+                        <textarea
+                            id="about"
+                            rows={5}
+                            value={form.about}
+                            onChange={set("about")}
+                            className={inputClass}
+                            disabled={!canEdit}
+                        />
+                    </Field>
+                </div>
+            </Section>
 
-                <div className="flex justify-end gap-2 pt-5">
-                    <Button type="button" className="btn-secondary" disabled={!dirty} onClick={() => setForm(saved)}>Discard</Button>
-                    <Button type="submit" className="btn-primary" disabled={!dirty}>Save changes</Button>
-                </div></div>
+            {canEdit && (
+                hasAccess && (<div className="flex justify-end gap-2 py-6">
+                    <Button type="button" variant="outline" onClick={handleDiscard} disabled={!dirty || updateCompany.isPending}>
+                        Discard
+                    </Button>
+                    <Button type="submit" disabled={!dirty || updateCompany.isPending}>
+                        {updateCompany.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                        Save changes
+                    </Button>
+                </div>)
+            )}
         </form>
     );
 }

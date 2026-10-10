@@ -28,9 +28,9 @@ const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
 });
 
 // Attach access token to every request
@@ -64,6 +64,14 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 // Unwrap response.data + handle auth errors with auto-refresh-and-retry
+// Requests where a 401 means "wrong credentials", not "session expired"
+const AUTH_URLS = [
+  "/auth/login",
+  "/auth/refresh",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+];
+
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError) => {
@@ -72,15 +80,12 @@ axiosInstance.interceptors.response.use(
       | undefined;
 
     const isUnauthorized = error.response?.status === 401;
-    const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
+    const isAuthCall = AUTH_URLS.some((url) =>
+      originalRequest?.url?.includes(url),
+    );
     const alreadyRetried = originalRequest?._retry;
 
-    if (
-      isUnauthorized &&
-      !isRefreshCall &&
-      !alreadyRetried &&
-      originalRequest
-    ) {
+    if (isUnauthorized && !isAuthCall && !alreadyRetried && originalRequest) {
       originalRequest._retry = true;
       try {
         const newToken = await refreshAccessToken();
@@ -91,16 +96,18 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         clearAccessToken();
-        if (typeof window !== "undefined") {
+        // Only redirect if we're not already on the login page
+        if (
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/login"
+        ) {
           window.location.assign("/login");
         }
         return Promise.reject(refreshError);
       }
     }
 
-    if (isUnauthorized) {
-      clearAccessToken();
-    }
+    if (isUnauthorized && !isAuthCall) clearAccessToken();
     return Promise.reject(error);
   },
 );

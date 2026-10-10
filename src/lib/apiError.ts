@@ -10,6 +10,7 @@ export const handleApiError = (error: unknown) => {
 
     toast.error("Failed", {
       description: message,
+      duration: 5000,
     });
     return;
   }

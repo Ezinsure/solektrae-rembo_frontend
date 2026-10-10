@@ -61,16 +61,16 @@ const CustomersTable = ({
     return (
         <>
             <Table>
-                <TableHeader className="bg-] rounded-t-lg!">
-                    <TableRow>
-                        <TableHead className="font-semibold">Date</TableHead>
+                <TableHeader className="bg-[#11223320]">
+                    <TableRow className="hover:bg-transparent">
+                        <TableHead className="font-semibold first:rounded-tl-xl last:rounded-tr-xl">Date</TableHead>
                         <TableHead className="font-semibold">Names</TableHead>
                         <TableHead className="font-semibold">Email</TableHead>
                         <TableHead className="font-semibold">Phone</TableHead>
                         <TableHead className="font-semibold">Service</TableHead>
                         {/* <TableHead className="font-semibold">District</TableHead> */}
                         <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold ">Actions</TableHead>
+                        <TableHead className="font-semibold last:rounded-tr-xl">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
 
