@@ -111,7 +111,7 @@ const CompanyProfilePage = () => {
             />
 
             <Section title="Logo">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 bg-white p-2 md:p-10 rounded-2xl">
                     <div className="relative flex size-16 items-center justify-center overflow-hidden rounded-xl border bg-muted">
                         {logoSrc ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -155,18 +155,18 @@ const CompanyProfilePage = () => {
             </Section>
 
             <Section title="Details">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 bg-white p-2 md:p-10 rounded-2xl">
                     <Field>
                         <FieldLabel htmlFor="name">Company name</FieldLabel>
-                        <Input id="name" value={form.name} onChange={set("name")} required disabled={!canEdit} />
+                        <Input  className={inputClass} id="name" value={form.name} onChange={set("name")} required disabled={!canEdit} />
                     </Field>
                     <Field>
                         <FieldLabel htmlFor="phoneNumber">Phone number</FieldLabel>
-                        <Input id="phoneNumber" value={form.phoneNumber} onChange={set("phoneNumber")} placeholder="+250 7xx xxx xxx" disabled={!canEdit} />
+                        <Input  className={inputClass} id="phoneNumber" value={form.phoneNumber} onChange={set("phoneNumber")} placeholder="+250 7xx xxx xxx" disabled={!canEdit} />
                     </Field>
                     <Field className="sm:col-span-2">
                         <FieldLabel htmlFor="email">Email</FieldLabel>
-                        <Input id="email" type="email" value={form.email} onChange={set("email")} disabled={!canEdit} />
+                        <Input  className={inputClass} id="email" type="email" value={form.email} onChange={set("email")} disabled={!canEdit} />
                     </Field>
                     <Field className="sm:col-span-2">
                         <FieldLabel htmlFor="about">About</FieldLabel>
@@ -175,7 +175,7 @@ const CompanyProfilePage = () => {
                             rows={5}
                             value={form.about}
                             onChange={set("about")}
-                            className={inputClass}
+                          className={`${inputClass} h-auto py-2`}
                             disabled={!canEdit}
                         />
                     </Field>

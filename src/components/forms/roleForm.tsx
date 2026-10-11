@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Field, inputClass } from "../settings/ui";
+import { Field, inputClass} from "../settings/ui";
 import { ModalFooter } from "../modal/settingModal";
 
 const ACCESS_LEVELS = [
@@ -44,7 +44,7 @@ const RoleForm = ({ role, saving, onCancel, onSave }: any) => {
             disabled={isSystem || saving}
           />
         </Field>
-{/* lets new role has same access as admin or staff depending on access level chosen */}
+        {/* lets new role has same access as admin or staff depending on access level chosen */}
         <Field label="Access level" htmlFor="roleBase">
           <select
             id="roleBase"
