@@ -5,9 +5,9 @@ import {
     useGetAllCustomers,
     useUpdateCustomerStatus,
 } from "@/hooks/useCustomer";
-import CustomersHeader from "./customerHeader";
+import CustomersHeader, { rangeParams } from "./customerHeader";
 import CustomersTable from "./customerDatas";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ViewDrawer } from "@/components/drawer/viewDrawer";
 import { ViewCustomer } from "./viewCustomer";
 import { FormModal } from "@/components/modal/editModal";
@@ -18,6 +18,7 @@ import PaginatePage from "@/components/pagination/page";
 import { useDebouncedValue } from "@/hooks/useDebounceValue";
 import { TableFilters } from "@/components/ui/tableFilter";
 import { DateRange } from "react-day-picker";
+import { useServices } from "@/hooks/useServices";
 
 const STATUS_OPTIONS = [
     { label: "All", value: "all" },
@@ -38,78 +39,93 @@ const CustomersView = () => {
     const debouncedSearch = useDebouncedValue(search, 400);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const updateCustomerStatus = useUpdateCustomerStatus();
-    const { data: customerData, isLoading: customerLoading } =
-        useGetAllCustomers({
-            search: debouncedSearch,
-            ...(status !== "all" && { status }),
-            page,
-            limit: pageSize,
-        });
-    const totalItems = customerData?.total ?? 0;
+    const [serviceId, setServiceId] = useState("all");
+const { data: services = [] } = useServices({ includeInactive: true });
 
-    const filteredData = {
-        ...customerData,
-        data: (customerData?.data ?? []).filter((c: any) => {
-            if (!dateRange?.from) return true;
-            const created = new Date(c.createdAt);
-            const from = new Date(dateRange.from);
-            from.setHours(0, 0, 0, 0);
-            const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
-            to.setHours(23, 59, 59, 999);
-            return created >= from && created <= to;
-        }),
-    };
+const serviceOptions = useMemo(
+  () => [
+    { label: "All services", value: "all" },
+    ...services.map((s: any) => ({ label: s.name, value: s.id })),
+  ],
+  [services],
+);
+
+// One set of filters for the table, the cards and the CSV
+const filters = useMemo(() => {
+  const f: any = { ...rangeParams(dateRange) };
+  if (debouncedSearch?.trim()) f.search = debouncedSearch.trim();
+  if (status !== "all") f.status = status;
+  if (serviceId !== "all") f.serviceId = serviceId;
+  return f;
+}, [dateRange, debouncedSearch, status, serviceId]);
+
+const { data: customerData, isLoading: customerLoading } = useGetAllCustomers({
+  ...filters,
+  page,
+  limit: pageSize,
+});
+const totalItems = customerData?.total ?? 0;
 
     return (
         <div className=" min-h-[83vh]">
-            <CustomersHeader
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
-            />
-            <div className="flex justify-between my-4" >
-                <Button onClick={() => setCreateOpen(true)}>
-                    {" "}
-                    <Plus />
-                    New Customer
-                </Button>
-                <TableFilters
-                    search={search}
-                    onSearchChange={(value) => {
-                        setSearch(value);
-                        setPage(1);
-                    }}
-                    searchPlaceholder="Search customers..."
-                    filters={[
-                        {
-                            value: status,
-                            onChange: (value) => {
-                                setStatus(value);
-                                setPage(1);
-                            },
-                            options: STATUS_OPTIONS,
-                            placeholder: "Filter by status",
-                        },
-                    ]}
-                />
-            </div>
-            <div className="py-2 scroll-auto">
-                <CustomersTable
-                    // customerData={customerData}
-                    customerLoading={customerLoading}
-                    customerData={filteredData}
-                    onView={(customer) => {
-                        setSelectedCustomer(customer);
-                        setViewOpen(true);
-                    }}
-                    onEdit={(customer) => {
-                        setSelectedCustomer(customer);
-                        setEditOpen(true);
-                    }}
-                    onStatusChange={(customer, status) => {
-                        updateCustomerStatus.mutate({ id: customer.id, status });
-                    }}
-                />
-            </div>
+          <CustomersHeader
+      dateRange={dateRange}
+      onDateRangeChange={(range) => {
+        setDateRange(range);
+        setPage(1);
+      }}
+      onCreate={() => setCreateOpen(true)}
+      exportParams={filters}
+    />
+
+    <div className="my-6 rounded-xl border bg-card p-3">
+      <TableFilters
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        searchPlaceholder="Search name, email, phone or service…"
+        filters={[
+          {
+            value: serviceId,
+            onChange: (value) => {
+              setServiceId(value);
+              setPage(1);
+            },
+            options: serviceOptions,
+            placeholder: "Filter by service",
+          },
+          {
+            value: status,
+            onChange: (value) => {
+              setStatus(value);
+              setPage(1);
+            },
+            options: STATUS_OPTIONS,
+            placeholder: "Filter by status",
+          },
+        ]}
+      />
+    </div>
+
+    <div className="py-2 scroll-auto">
+      <CustomersTable
+        customerLoading={customerLoading}
+        customerData={customerData}
+        onView={(customer) => {
+          setSelectedCustomer(customer);
+          setViewOpen(true);
+        }}
+        onEdit={(customer) => {
+          setSelectedCustomer(customer);
+          setEditOpen(true);
+        }}
+        onStatusChange={(customer, status) => {
+          updateCustomerStatus.mutate({ id: customer.id, status });
+        }}
+      />
+    </div>
 
             {/* Create */}
             <FormModal
