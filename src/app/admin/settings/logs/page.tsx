@@ -214,7 +214,7 @@ const LogsPage = () => {
           {/* Desktop table */}
           <div className="mt-3 hidden overflow-x-auto rounded-xl border border-gray-200 md:block">
             <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+              <thead className="bg-[#11223320] text-xs uppercase tracking-wide text-[#112233]">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">
                     Time

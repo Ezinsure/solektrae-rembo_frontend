@@ -1,10 +1,5 @@
 export const ROLES = ["admin", "dev", "staff", "hr"];
 
-export const ROLE_OPTIONS = ROLES.map((r) => ({
-  value: r,
-  label: r.charAt(0).toUpperCase() + r.slice(1),
-}));
-
 const FULL_ACCESS_ROLES = ["admin", "dev"];
 
 export interface NavLink {
@@ -39,7 +34,7 @@ export const canAccess = (role: string | undefined, pathname: string) => {
   if (FULL_ACCESS_ROLES.includes(role)) return true;
 
   const match = NAV_LINKS.find((l) => matchesPath(pathname, l.href));
-  if (!match) return false; // not listed = not allowed (was: true)
+  if (!match) return false; 
 
   return canSeeLink(match, role);
 };

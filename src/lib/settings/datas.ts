@@ -10,7 +10,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-
 export const SETTINGS_BASE = "/admin/settings";
 
 export const settingsNav: {
@@ -54,54 +53,6 @@ export const settingsNav: {
     description: "Switch or add accounts",
     href: `${SETTINGS_BASE}/account`,
     icon: Repeat,
-  },
-];
-
-/* ── Company ─────────────────────────────────────────────── */
-export type Company = {
-  name: string;
-  phone: string;
-  email: string;
-  logo: string | null;
-  about: string;
-};
-
-export const sampleCompany: Company = {
-  name: "Solektra Rembo",
-  phone: "+250 788 000 000",
-  email: "info@example.com",
-  logo: null,
-  about: "We help customers apply for Irembo services quickly and correctly.",
-};
-
-/* ── Roles ───────────────────────────────────────────────── */
-export type Role = {
-  id: string;
-  name: string;
-  description: string;
-  users: number;
-  system?: boolean;
-};
-
-export const sampleRoles: Role[] = [
-  {
-    id: "r1",
-    name: "Admin",
-    description: "Full access, including settings, users and roles.",
-    users: 2,
-    system: true,
-  },
-  {
-    id: "r2",
-    name: "Agent",
-    description: "Registers customers and handles their applications.",
-    users: 6,
-  },
-  {
-    id: "r3",
-    name: "Viewer",
-    description: "Can view customers and reports, but not change them.",
-    users: 1,
   },
 ];
 

@@ -32,7 +32,7 @@ export function UserCard({
     onChangePassword: (user: any) => void;
 }) {
     const statusKey = user.isActive ? "active" : "inactive";
-
+    console.log(user)
     return (
         <div
             className={cn(
@@ -95,7 +95,7 @@ export function UserCard({
 
             <div className="mt-8 flex items-center justify-between">
                 <Badge variant="secondary" className="capitalize font-normal">
-                    {user.role}
+                    {user.roleName}
                 </Badge>
                 <StatusBadge status={statusKey} />
             </div>

@@ -14,9 +14,9 @@ export function PageHeader({ title, description, action }: { title: string; desc
 
 export function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-5 border-b border-gray-200 py-7 last:border-0 lg:grid-cols-[14rem_1fr] lg:gap-10">
+    <section className="grid gap-5 py-7 last:border-0 lg:grid-cols-[14rem_1fr] lg:gap-5">
       <div>
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-base font-medium text-foreground">{title}</h2>
         {description && <p className="mt-1 text-sm leading-relaxed text-gray-500">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
@@ -72,4 +72,4 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
 }
 
 export const inputClass =
-  "h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus-visible:border-ring focus-visible:ring-ring/50";
+  "h-11 w-full rounded-md border border-gray-300 bg-white px-3 p-2 text-sm outline-none placeholder:text-gray-400 focus-visible:border-ring focus-visible:ring-ring/50";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { handleApiError } from "@/lib/apiError";
 import { toast } from "sonner";
 import { UserService } from "@/services/users";
@@ -13,6 +13,7 @@ export const useGetAllUsers = (
   return useQuery({
     queryKey: [USER_KEY, filters],
     queryFn: () => UserService.getAll(filters),
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -194,13 +194,15 @@ export const getUserSchema = (isEdit: boolean) =>
         /^\+\d{8,15}$/,
         "Enter a valid phone number",
       ),
-      role: z
-        .string()
-        .min(1, "Select a role")
-        .refine((r) => ROLES.includes(r), "Select a valid role"),
+      roleId: z.string(),
       password: z.string(),
     })
     .superRefine((data, ctx) => {
+      // a new user must get a role (on edit, empty = keep the current one)
+      if (!isEdit && !data.roleId) {
+        ctx.addIssue({ code: "custom", path: ["roleId"], message: "Select a role" });
+      }
+
       // on edit, a blank password means "keep the current one"
       if (isEdit && data.password === "") return;
 

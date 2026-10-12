@@ -20,12 +20,16 @@ import { getInitials } from "@/helper";
 import { canSeeLink, NAV_LINKS } from "../../config/nav";
 import { useState } from "react";
 import ProfileDialog from "../modal/profileModal";
+import { useCurrentCompany } from "@/hooks/useCompany";
 
 const TopNav = () => {
   const pathname = usePathname();
   const [profileOpen, setProfileOpen] = useState(false);
   const { data: user } = useGetMe();
   const logout = useLogout();
+  const { data: company, isLoading, isError } = useCurrentCompany();
+
+  const logoSrc = company?.logoUrl ?? null;
 
   const initials = getInitials(user?.names);
 
@@ -35,12 +39,18 @@ const TopNav = () => {
     <><header className="w-full bg-white max-w-[98%] mx-auto container my-3 rounded-2xl">
       <div className=" flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-2">
-          <Image
-            src={IremboLogo}
-            alt="Irembo Logo"
-            width={34}
-            height={34}
-            priority />
+          {logoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoSrc} alt="Company logo" width={34}
+              height={34} />
+          ) : (
+            <Image
+              src={IremboLogo}
+              alt="Irembo Logo"
+              width={34}
+              height={34}
+              priority />
+          )}
         </div>
         <nav className="hidden md:flex items-center gap-8">
           {visibleLinks.map((link) => {

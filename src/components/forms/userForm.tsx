@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/select";
 import { getUserSchema, type UserFormValues } from "@/lib/form-schema";
 import { useCreateUser, useUpdateUser } from "@/hooks/useUser";
-import { ROLE_OPTIONS } from "@/config/nav";
+import { useRoles } from "@/hooks/useRoles";
+import { useMyCompanies } from "@/hooks/useCompany";
 
 export function UserForm({
   user,
@@ -30,10 +31,20 @@ export function UserForm({
   const isEdit = !!user;
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
+  const { data: allRoles = [], isLoading: rolesLoading, isError: rolesError } = useRoles();
+  const { data: companies = [] } = useMyCompanies();
   const isPending = createUser.isPending || updateUser.isPending;
-
   const [showPassword, setShowPassword] = useState(false);
   const schema = useMemo(() => getUserSchema(isEdit), [isEdit]);
+
+  const isDev = companies.find((c: any) => c.isCurrent)?.role === "dev";
+
+  const lockedDevUser = isEdit && user?.role === "dev" && !isDev;
+
+  const roles = allRoles.filter(
+    (r: any) => r.baseRole !== "dev" || isDev || (lockedDevUser && r.id === user?.roleId),
+  );
+  const roleItems = roles.map((r: any) => ({ value: r.id, label: r.name }));
 
   const {
     register,
@@ -47,15 +58,17 @@ export function UserForm({
       names: user?.names ?? "",
       email: user?.email ?? "",
       phoneNumber: user?.phoneNumber ?? "",
-      role: user?.role ?? "",
+      roleId: user?.roleId ?? "",
       password: "",
     },
   });
 
   const onSubmit = (data: UserFormValues) => {
-    // never send an empty password on update
     const { password, ...rest } = data;
-    const payload = isEdit && !password ? rest : data;
+    const payload: any = isEdit && !password ? rest : data;
+
+
+    if (lockedDevUser) delete payload.roleId;
 
     if (isEdit) {
       updateUser.mutate({ id: user.id, data: payload }, { onSuccess });
@@ -74,9 +87,7 @@ export function UserForm({
             </FieldLabel>
             <Input id="names" {...register("names")} />
             {errors.names && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.names.message}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{errors.names.message}</p>
             )}
           </Field>
 
@@ -84,25 +95,16 @@ export function UserForm({
             <FieldLabel htmlFor="email" className="text-sm opacity-80">
               Email *
             </FieldLabel>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="off"
-              {...register("email")}
-            />
+            <Input id="email" type="email" autoComplete="off" {...register("email")} />
             {errors.email && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
             )}
           </Field>
 
           {!isEdit && (
             <Field>
               <FieldLabel htmlFor="password" className="text-sm opacity-80">
-                {isEdit
-                  ? "New password (leave blank to keep current)"
-                  : "Password *"}
+                Password *
               </FieldLabel>
               <div className="relative">
                 <Input
@@ -118,17 +120,11 @@ export function UserForm({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
               )}
             </Field>
           )}
@@ -150,46 +146,54 @@ export function UserForm({
               )}
             />
             {errors.phoneNumber && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.phoneNumber.message}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{errors.phoneNumber.message}</p>
             )}
           </Field>
 
           <Field>
             <FieldLabel className="text-sm opacity-80">Role *</FieldLabel>
             <Controller
-              name="role"
+              name="roleId"
               control={control}
               render={({ field }) => (
                 <Select
+                  items={roleItems} 
                   value={field.value}
                   onValueChange={(v) => field.onChange(v ?? "")}
+                  disabled={rolesLoading || rolesError || lockedDevUser}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a role" />
+                    {rolesLoading ? (
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading roles…
+                      </span>
+                    ) : (
+                      <SelectValue placeholder="Select a role" />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLE_OPTIONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
+                    {roles.map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
-            {errors.role && (
-              <p className="text-xs text-red-500 mt-1">{errors.role.message}</p>
+            {rolesError && (
+              <p className="text-xs text-red-500 mt-1">Could not load roles.</p>
+            )}
+            {lockedDevUser && (
+              <p className="text-xs text-muted-foreground mt-1">Only a developer can change this role.</p>
+            )}
+            {errors.roleId && (
+              <p className="text-xs text-red-500 mt-1">{errors.roleId.message}</p>
             )}
           </Field>
         </FieldGroup>
 
-        <Button
-          type="submit"
-          className="w-1/2 flex mx-auto mt-6"
-          disabled={isPending}
-        >
+        <Button type="submit" className="w-1/2 flex mx-auto mt-6" disabled={isPending}>
           {isPending ? "Saving..." : isEdit ? "Save changes" : "Create user"}
         </Button>
       </form>
