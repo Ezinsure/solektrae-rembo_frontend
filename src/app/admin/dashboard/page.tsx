@@ -64,181 +64,180 @@ export default function DashboardPage() {
     const viewingStaff = data.staff.find((s) => s.id === viewing) ?? null;
 
     return (
-        // <div >
-        //     {/* Header + date range */}
-        //     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        //         <div className="mb-5">
-        //             <h1 className="text-2xl font-medium">Dashboard</h1>
-        //             <p className="text-muted-foreground">
-        //                 {formatDay(from, true)} – {formatDay(to, true)} · {days + 1} days
-        //             </p>
-        //         </div>
+        <div >
+            {/* Header + date range */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="mb-5">
+                    <h1 className="text-2xl font-medium">Dashboard</h1>
+                    <p className="text-muted-foreground">
+                        {formatDay(from, true)} – {formatDay(to, true)} · {days + 1} days
+                    </p>
+                </div>
 
-        //         <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-3">
-        //             <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Date range">
-        //                 {PRESETS.map((p) => (
-        //                     <button
-        //                         key={p.label}
-        //                         type="button"
-        //                         aria-pressed={activePreset === p.label}
-        //                         onClick={() => { setTo(today); setFrom(addDays(today, -p.days)); }}
-        //                         className={cn(
-        //                             "rounded-md px-3 py-1.5 text-sm transition-colors",
-        //                             activePreset === p.label ? "bg-primary text-primary-foreground" : "text-gray-600 hover:bg-gray-100",
-        //                         )}
-        //                     >
-        //                         {p.label}
-        //                     </button>
-        //                 ))}
-        //             </div>
-        //             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 py-1">
-        //                 <CalendarDays className="h-4 w-4 shrink-0 text-gray-400" />
-        //                 <input type="date" aria-label="From" value={from} max={to} onChange={(e) => e.target.value && setFrom(e.target.value)} className="bg-transparent text-sm outline-none" />
-        //                 <span className="text-gray-400">–</span>
-        //                 <input type="date" aria-label="To" value={to} min={from} max={today} onChange={(e) => e.target.value && setTo(e.target.value)} className="bg-transparent text-sm outline-none" />
-        //             </div>
-        //         </div>
-        //     </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-3">
+                    <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Date range">
+                        {PRESETS.map((p) => (
+                            <button
+                                key={p.label}
+                                type="button"
+                                aria-pressed={activePreset === p.label}
+                                onClick={() => { setTo(today); setFrom(addDays(today, -p.days)); }}
+                                className={cn(
+                                    "rounded-md px-3 py-1.5 text-sm transition-colors",
+                                    activePreset === p.label ? "bg-primary text-primary-foreground" : "text-gray-600 hover:bg-gray-100",
+                                )}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2 py-1">
+                        <CalendarDays className="h-4 w-4 shrink-0 text-gray-400" />
+                        <input type="date" aria-label="From" value={from} max={to} onChange={(e) => e.target.value && setFrom(e.target.value)} className="bg-transparent text-sm outline-none" />
+                        <span className="text-gray-400">–</span>
+                        <input type="date" aria-label="To" value={to} min={from} max={today} onChange={(e) => e.target.value && setTo(e.target.value)} className="bg-transparent text-sm outline-none" />
+                    </div>
+                </div>
+            </div>
 
-        //     {/* Summary tiles */}
-        //     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 mb-4">
-        //         <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:col-span-2 xl:col-span-1">
-        //             <div className="flex items-center gap-2 text-sm text-gray-500"><Users className="h-4 w-4" /> Total customers</div>
-        //             <p className="mt-3 text-3xl font-semibold text-gray-900">{data.total.toLocaleString()}</p>
-        //             {change !== null && (
-        //                 <p className="mt-1 text-xs text-gray-500">
-        //                     <span className={cn("font-medium", change >= 0 ? "text-emerald-700" : "text-red-700")}>{change >= 0 ? "▲" : "▼"} {Math.abs(change)}%</span>{" "}
-        //                     vs previous {days + 1} days
-        //                 </p>
-        //             )}
-        //         </div>
-        //         {STATUSES.map((s) => {
-        //             const Icon = STATUS_ICON[s.key];
-        //             const n = data.statusCounts[s.key];
-        //             return (
-        //                 <div key={s.key} className="rounded-2xl border border-gray-200 bg-white p-5">
-        //                     <div className="flex items-center gap-2 text-sm text-gray-500"><Icon className="h-4 w-4" /> {s.label}</div>
-        //                     <p className="mt-3 text-3xl font-semibold text-gray-900">{n.toLocaleString()}</p>
-        //                     <div className="mt-2 flex items-center gap-2">
-        //                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
-        //                             <div className={cn("h-full rounded-full", s.dot)} style={{ width: `${pct(n, data.total)}%` }} />
-        //                         </div>
-        //                         <span className="text-xs text-gray-500">{pct(n, data.total)}%</span>
-        //                     </div>
-        //                 </div>
-        //             );
-        //         })}
-        //     </div>
+            {/* Summary tiles */}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 mb-4">
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:col-span-2 xl:col-span-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-500"><Users className="h-4 w-4" /> Total customers</div>
+                    <p className="mt-3 text-3xl font-semibold text-gray-900">{data.total.toLocaleString()}</p>
+                    {change !== null && (
+                        <p className="mt-1 text-xs text-gray-500">
+                            <span className={cn("font-medium", change >= 0 ? "text-emerald-700" : "text-red-700")}>{change >= 0 ? "▲" : "▼"} {Math.abs(change)}%</span>{" "}
+                            vs previous {days + 1} days
+                        </p>
+                    )}
+                </div>
+                {STATUSES.map((s) => {
+                    const Icon = STATUS_ICON[s.key];
+                    const n = data.statusCounts[s.key];
+                    return (
+                        <div key={s.key} className="rounded-2xl border border-gray-200 bg-white p-5">
+                            <div className="flex items-center gap-2 text-sm text-gray-500"><Icon className="h-4 w-4" /> {s.label}</div>
+                            <p className="mt-3 text-3xl font-semibold text-gray-900">{n.toLocaleString()}</p>
+                            <div className="mt-2 flex items-center gap-2">
+                                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                                    <div className={cn("h-full rounded-full", s.dot)} style={{ width: `${pct(n, data.total)}%` }} />
+                                </div>
+                                <span className="text-xs text-gray-500">{pct(n, data.total)}%</span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
 
-        //     {/* Charts */}
-        //     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        //         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="trend-title">
-        //             <h2 id="trend-title" className="text-base font-semibold text-gray-900">New customers</h2>
-        //             <p className="text-sm text-gray-500">{days > 45 ? "Per week" : "Per day"}, for the selected dates</p>
-        //             <div className="mt-4">
-        //                 {data.total ? <TrendChart points={data.trend} /> : <Empty text="No customers in this period." />}
-        //             </div>
-        //         </section>
+            {/* Charts */}
+            <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+                <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="trend-title">
+                    <h2 id="trend-title" className="text-base font-semibold text-gray-900">New customers</h2>
+                    <p className="text-sm text-gray-500">{days > 45 ? "Per week" : "Per day"}, for the selected dates</p>
+                    <div className="mt-4">
+                        {data.total ? <TrendChart points={data.trend} /> : <Empty text="No customers in this period." />}
+                    </div>
+                </section>
 
-        //         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="services-title">
-        //             <h2 id="services-title" className="text-base font-semibold text-gray-900">Customers by service</h2>
-        //             <p className="text-sm text-gray-500">Share of all customers in this period</p>
-        //             {data.total ? (
-        //                 <ul className="mt-5 space-y-3.5">
-        //                     {data.services.map((s) => (
-        //                         <li key={s.key} className="group" title={`${s.label}: ${s.count} customers (${pct(s.count, data.total)}%)`}>
-        //                             <div className="flex items-baseline justify-between gap-3 text-sm">
-        //                                 <span className="text-gray-700">{s.label}</span>
-        //                                 <span className="tabular-nums text-gray-500">
-        //                                     <span className="font-medium text-gray-900">{pct(s.count, data.total)}%</span> · {s.count}
-        //                                 </span>
-        //                             </div>
-        //                             <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100">
-        //                                 <div className="h-full rounded-full bg-primary transition-[width] group-hover:opacity-80" style={{ width: `${pct(s.count, data.total)}%` }} />
-        //                             </div>
-        //                         </li>
-        //                     ))}
-        //                 </ul>
-        //             ) : (
-        //                 <Empty text="No customers in this period." />
-        //             )}
-        //         </section>
-        //     </div>
+                <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="services-title">
+                    <h2 id="services-title" className="text-base font-semibold text-gray-900">Customers by service</h2>
+                    <p className="text-sm text-gray-500">Share of all customers in this period</p>
+                    {data.total ? (
+                        <ul className="mt-5 space-y-3.5">
+                            {data.services.map((s) => (
+                                <li key={s.key} className="group" title={`${s.label}: ${s.count} customers (${pct(s.count, data.total)}%)`}>
+                                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                                        <span className="text-gray-700">{s.label}</span>
+                                        <span className="tabular-nums text-gray-500">
+                                            <span className="font-medium text-gray-900">{pct(s.count, data.total)}%</span> · {s.count}
+                                        </span>
+                                    </div>
+                                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100">
+                                        <div className="h-full rounded-full bg-primary transition-[width] group-hover:opacity-80" style={{ width: `${pct(s.count, data.total)}%` }} />
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <Empty text="No customers in this period." />
+                    )}
+                </section>
+            </div>
 
-        //     {/* Staff table */}
-        //     <section className="rounded-2xl border border-gray-200 bg-white" aria-labelledby="staff-title">
-        //         <div className="flex flex-col gap-1 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
-        //             <div>
-        //                 <h2 id="staff-title" className="text-base font-semibold text-gray-900">Customers by staff member</h2>
-        //                 <p className="text-sm text-gray-500">Who registered customers in this period, and where they are now</p>
-        //             </div>
-        //         </div>
+            {/* Staff table */}
+            <section className="rounded-2xl border border-gray-200 bg-white" aria-labelledby="staff-title">
+                <div className="flex flex-col gap-1 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
+                    <div>
+                        <h2 id="staff-title" className="text-base font-semibold text-gray-900">Customers by staff member</h2>
+                        <p className="text-sm text-gray-500">Who registered customers in this period, and where they are now</p>
+                    </div>
+                </div>
 
-        //         {/* Desktop */}
-        //         <div className="hidden overflow-x-auto md:block">
-        //             <table className="w-full text-left text-sm">
-        //                 <thead className="border-y border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-        //                     <tr>
-        //                         <th scope="col" className="px-6 py-3 font-medium">Staff member</th>
-        //                         <th scope="col" className="px-4 py-3 text-right font-medium">Total</th>
-        //                         {STATUSES.map((s) => <th key={s.key} scope="col" className="px-4 py-3 text-right font-medium">{s.label}</th>)}
-        //                         <th scope="col" className="px-4 py-3 font-medium">Completion</th>
-        //                         <th scope="col" className="px-6 py-3 text-right font-medium"><span className="sr-only">Actions</span></th>
-        //                     </tr>
-        //                 </thead>
-        //                 <tbody className="divide-y divide-gray-100">
-        //                     {data.staff.map((u) => (
-        //                         <tr key={u.id} className="hover:bg-gray-50">
-        //                             <td className="px-6 py-3"><Person name={u.name} email={u.email} /></td>
-        //                             <td className="px-4 py-3 text-right font-semibold tabular-nums text-gray-900">{u.total}</td>
-        //                             {STATUSES.map((s) => <td key={s.key} className="px-4 py-3 text-right tabular-nums text-gray-600">{u.counts[s.key]}</td>)}
-        //                             <td className="px-4 py-3"><Completion done={u.counts.completed} total={u.total} /></td>
-        //                             <td className="px-6 py-3 text-right">
-        //                                 <button className="btn-secondary h-8 px-3" onClick={() => setViewing(u.id)} disabled={!u.total}>
-        //                                     <Eye className="h-4 w-4" /> View
-        //                                 </button>
-        //                             </td>
-        //                         </tr>
-        //                     ))}
-        //                 </tbody>
-        //             </table>
-        //         </div>
+                {/* Desktop */}
+                <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full text-left text-sm">
+                        <thead className="border-y border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 font-medium">Staff member</th>
+                                <th scope="col" className="px-4 py-3 text-right font-medium">Total</th>
+                                {STATUSES.map((s) => <th key={s.key} scope="col" className="px-4 py-3 text-right font-medium">{s.label}</th>)}
+                                <th scope="col" className="px-4 py-3 font-medium">Completion</th>
+                                <th scope="col" className="px-6 py-3 text-right font-medium"><span className="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {data.staff.map((u) => (
+                                <tr key={u.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-3"><Person name={u.name} email={u.email} /></td>
+                                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-gray-900">{u.total}</td>
+                                    {STATUSES.map((s) => <td key={s.key} className="px-4 py-3 text-right tabular-nums text-gray-600">{u.counts[s.key]}</td>)}
+                                    <td className="px-4 py-3"><Completion done={u.counts.completed} total={u.total} /></td>
+                                    <td className="px-6 py-3 text-right">
+                                        <button className="btn-secondary h-8 px-3" onClick={() => setViewing(u.id)} disabled={!u.total}>
+                                            <Eye className="h-4 w-4" /> View
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-        //         {/* Mobile */}
-        //         <ul className="divide-y divide-gray-100 border-t border-gray-200 md:hidden">
-        //             {data.staff.map((u) => (
-        //                 <li key={u.id} className="p-4">
-        //                     <div className="flex items-center justify-between gap-3">
-        //                         <Person name={u.name} />
-        //                         <span className="text-lg font-semibold tabular-nums text-gray-900">{u.total}</span>
-        //                     </div>
-        //                     <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-        //                         {STATUSES.map((s) => (
-        //                             <div key={s.key} className="rounded-lg bg-gray-50 px-1 py-2">
-        //                                 <p className="font-semibold tabular-nums text-gray-900">{u.counts[s.key]}</p>
-        //                                 <p className="text-[11px] text-gray-500">{s.label}</p>
-        //                             </div>
-        //                         ))}
-        //                     </div>
-        //                     <button className="btn-secondary mt-3 w-full" onClick={() => setViewing(u.id)} disabled={!u.total}>
-        //                         <Eye className="h-4 w-4" /> View customers
-        //                     </button>
-        //                 </li>
-        //             ))}
-        //         </ul>
-        //     </section>
+                {/* Mobile */}
+                <ul className="divide-y divide-gray-100 border-t border-gray-200 md:hidden">
+                    {data.staff.map((u) => (
+                        <li key={u.id} className="p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <Person name={u.name} />
+                                <span className="text-lg font-semibold tabular-nums text-gray-900">{u.total}</span>
+                            </div>
+                            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                                {STATUSES.map((s) => (
+                                    <div key={s.key} className="rounded-lg bg-gray-50 px-1 py-2">
+                                        <p className="font-semibold tabular-nums text-gray-900">{u.counts[s.key]}</p>
+                                        <p className="text-[11px] text-gray-500">{s.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="btn-secondary mt-3 w-full" onClick={() => setViewing(u.id)} disabled={!u.total}>
+                                <Eye className="h-4 w-4" /> View customers
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </section>
 
-        //     <Modal
-        //         open={!!viewingStaff}
-        //         onClose={() => setViewing(null)}
-        //         size="lg"
-        //         title={viewingStaff?.name ?? ""}
-        //         description={viewingStaff ? `${viewingStaff.total} customers · ${formatDay(from)} – ${formatDay(to)}` : undefined}
-        //     >
-        //         {viewingStaff && <StaffDetails customers={viewingStaff.customers} counts={viewingStaff.counts} />}
-        //     </Modal>
-        // </div>
-        <div>Under development ....</div>
+            <Modal
+                open={!!viewingStaff}
+                onClose={() => setViewing(null)}
+                size="lg"
+                title={viewingStaff?.name ?? ""}
+                description={viewingStaff ? `${viewingStaff.total} customers · ${formatDay(from)} – ${formatDay(to)}` : undefined}
+            >
+                {viewingStaff && <StaffDetails customers={viewingStaff.customers} counts={viewingStaff.counts} />}
+            </Modal>
+        </div>
     );
 }
 
