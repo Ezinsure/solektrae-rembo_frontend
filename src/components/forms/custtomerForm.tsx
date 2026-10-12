@@ -90,7 +90,7 @@ const buildSchema = (service: any) => {
 
 export function CustomerForm({
     customer,
-    companySlug = process.env.NEXT_PUBLIC_COMPANY_SLUG,
+    companySlug = process.env.NEXT_PUBLIC_COMPANY_SLUG?.trim() || "irembo-solektra",
     onSuccess,
 }: {
     customer?: any;
