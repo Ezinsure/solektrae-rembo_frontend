@@ -347,7 +347,7 @@ export function CustomerForm({
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel className="text-sm opacity-80">
+                                    <FieldLabel className="text-sm opacity-80 mb-1">
                                         Choose Service / Choisir un service / Hitamo Serivisi *
                                     </FieldLabel>
 
@@ -356,7 +356,7 @@ export function CustomerForm({
                                             {Array.from({ length: 3 }).map((_, index) => (
                                                 <div
                                                     key={index}
-                                                    className="flex h-[39px] items-center justify-between rounded-xl border border-border px-2.5"
+                                                    className="flex h-[39px] items-center justify-between max-w-1/2 rounded-xl border border-border px-2.5"
                                                 >
                                                     <Skeleton className="h-4 w-24 rounded-md" />
                                                     <Skeleton className="h-4 w-4 rounded-full" />
@@ -375,7 +375,7 @@ export function CustomerForm({
                                         <RadioGroup
                                             value={values.serviceId}
                                             onValueChange={handleOptionChange}
-                                            className="max-w-44"
+                                            className="max-w-1/2"
                                         >
                                             {services.map((s) => (
                                                 <FieldLabel key={s.id} htmlFor={s.id}>
