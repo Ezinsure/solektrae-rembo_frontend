@@ -1,4 +1,4 @@
-export const ROLES = ["admin", "dev", "staff", "hr"];
+export const ROLES = ["admin", "dev", "staff", "hr", "user"];
 
 const FULL_ACCESS_ROLES = ["admin", "dev"];
 
@@ -10,7 +10,7 @@ export interface NavLink {
 
 export const NAV_LINKS: NavLink[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
-  { label: "Customers", href: "/admin/customers", roles: ["staff"] },
+  { label: "Customers", href: "/admin/customers", roles: ["staff", "user"] },
   { label: "Settings", href: "/admin/settings", roles: ["hr"] },
 ];
 
@@ -34,7 +34,7 @@ export const canAccess = (role: string | undefined, pathname: string) => {
   if (FULL_ACCESS_ROLES.includes(role)) return true;
 
   const match = NAV_LINKS.find((l) => matchesPath(pathname, l.href));
-  if (!match) return false; 
+  if (!match) return false;
 
   return canSeeLink(match, role);
 };
