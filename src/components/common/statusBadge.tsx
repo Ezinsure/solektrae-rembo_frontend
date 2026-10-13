@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { CheckCircle2, CircleDot, XCircle } from "lucide-react";
 
 const STATUS_STYLES: Record<string, string> = {
     pending: "bg-amber-50 text-amber-600 border-amber-200",
@@ -60,3 +61,35 @@ export const actionMeta: any = {
 export const entityLabel: any = {
     customer: "Customer", user: "User", role: "Role", service: "Service", company: "Company", auth: "Sign-in",
 };
+const STATUS_ACTIONS: Record<string, any> = {
+  completed: {
+    label: "Mark as completed",
+    icon: CheckCircle2,
+    itemClass: "text-emerald-700 focus:text-emerald-700",
+    variant: "success",
+    title: "Mark this application as completed?",
+    confirm: "Yes, mark completed",
+    needsReason: false,
+  },
+  cancelled: {
+    label: "Cancel application",
+    icon: XCircle,
+    itemClass: "text-red-600 focus:text-red-600",
+    variant: "danger",
+    title: "Cancel this application?",
+    confirm: "Yes, cancel it",
+    needsReason: true,
+  },
+};
+
+export const statusAction = (status: string) =>
+  STATUS_ACTIONS[status] ?? {
+    label: `Mark as ${status.replace(/_/g, " ")}`,
+    icon: CircleDot,
+    itemClass: "",
+    variant: "default",
+    title: `Change status to ${status.replace(/_/g, " ")}?`,
+    confirm: "Yes, update",
+    needsReason: false,
+  };
+

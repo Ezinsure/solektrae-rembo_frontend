@@ -86,8 +86,8 @@ export const useDeleteCustomer = () => {
 export const useUpdateCustomerStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: any) =>
-      CustomerService.updateStatus(id, status),
+    mutationFn: ({ id, status, note }: any) =>
+      CustomerService.updateStatus(id, status, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [CUSTOMERS_KEY] });
       toast.success("Status updated");

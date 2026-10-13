@@ -17,16 +17,14 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, CircleDot } from "lucide-react";
-import { StatusBadge } from "@/components/common/statusBadge";
+import { MoreHorizontal, Eye, Pencil } from "lucide-react";
+import { statusAction, StatusBadge } from "@/components/common/statusBadge";
 import { formatDateTime } from "@/lib/apiError";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/comfirmDialog";
+import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = ["pending", "completed", "cancelled"];
 
@@ -38,24 +36,40 @@ const CustomersTable = ({
     onView,
     onEdit,
     onStatusChange,
+    statusUpdating = false,
 }: {
     customerData: any;
     customerLoading: boolean;
     onView: (customer: any) => void;
     onEdit: (customer: any) => void;
-    onStatusChange: (customer: any, status: string) => void;
+    onStatusChange: (customer: any, status: string, note: string | undefined, onDone: () => void) => void;
+    statusUpdating?: boolean;
 }) => {
     const customers = customerData?.data ?? [];
+    const [pendingChange, setPendingChange] = useState<{ customer: any; status: string } | null>(null);
+    const [statusOpen, setStatusOpen] = useState(false);
+    const [note, setNote] = useState("");
 
-    const [pendingChange, setPendingChange] = useState<{
-        customer: any;
-        status: string;
-    } | null>(null);
+    const action = pendingChange ? statusAction(pendingChange.status) : null;
+    const isCancelling = pendingChange?.status === "cancelled";
+
+    const openStatusDialog = (customer: any, status: string) => {
+        setPendingChange({ customer, status });
+        setNote(""); // reset on open, not on close, so nothing changes while it animates out
+        setStatusOpen(true);
+    };
+
+    // keep pendingChange: the dialog keeps its content while closing
+    const closeStatusDialog = () => setStatusOpen(false);
 
     const confirmStatusChange = () => {
         if (!pendingChange) return;
-        onStatusChange(pendingChange.customer, pendingChange.status);
-        setPendingChange(null);
+        onStatusChange(
+            pendingChange.customer,
+            pendingChange.status,
+            isCancelling ? note.trim() : undefined,
+            closeStatusDialog,
+        );
     };
 
     return (
@@ -102,7 +116,6 @@ const CustomersTable = ({
                                 <TableCell>{data?.email}</TableCell>
                                 <TableCell>{data?.phoneNumber}</TableCell>
                                 <TableCell className="capitalize">{data?.service}</TableCell>
-                                {/* <TableCell>{data?.district ?? 'N/A'}</TableCell> */}
                                 <TableCell>
                                     <StatusBadge status={data?.status} />
                                 </TableCell>
@@ -110,50 +123,43 @@ const CustomersTable = ({
                                     <DropdownMenu>
                                         <DropdownMenuTrigger
                                             render={
-                                                <Button variant="ghost" size="icon">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${data.names}`}>
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             }
                                         />
-                                        <DropdownMenuContent align="end">
+                                        <DropdownMenuContent align="end" className="w-52">
                                             <DropdownMenuGroup>
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
+                                                <DropdownMenuLabel className="text-xs text-muted-foreground">Actions</DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => onView(data)}>
-                                                    <Eye className="h-4 w-4 mr-2" />
-                                                    View
+                                                    <Eye className="mr-2 h-4 w-4" /> View details
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem disabled={data.status?.toLowerCase() !== "pending"} onClick={() => onEdit(data)}>
-                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                    Edit
+                                                <DropdownMenuItem disabled={data.status !== "pending"} onClick={() => onEdit(data)}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Edit
                                                 </DropdownMenuItem>
-                                                {data.status === "pending" && (
-                                                    <DropdownMenuSub>
-                                                        <DropdownMenuSubTrigger>
-                                                            <CircleDot className="h-4 w-4 mr-2" />
-                                                            Update Status
-                                                        </DropdownMenuSubTrigger>
-                                                        <DropdownMenuSubContent>
-                                                            {STATUS_OPTIONS.filter(
-                                                                (s) => s !== "pending",
-                                                            ).map((s) => (
+                                            </DropdownMenuGroup>
+
+                                            {data.status === "pending" && (
+                                                <>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuGroup>
+                                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Update status</DropdownMenuLabel>
+                                                        {STATUS_OPTIONS.filter((s: string) => s !== "pending").map((s: string) => {
+                                                            const a = statusAction(s);
+                                                            return (
                                                                 <DropdownMenuItem
                                                                     key={s}
-                                                                    className="capitalize"
-                                                                    onClick={() =>
-                                                                        setPendingChange({
-                                                                            customer: data,
-                                                                            status: s,
-                                                                        })
-                                                                    }
+                                                                    className={a.itemClass}
+                                                                    onClick={() => openStatusDialog(data, s)}
                                                                 >
-                                                                    {s}
+                                                                    <a.icon className="mr-2 h-4 w-4" />
+                                                                    {a.label}
                                                                 </DropdownMenuItem>
-                                                            ))}
-                                                        </DropdownMenuSubContent>
-                                                    </DropdownMenuSub>
-                                                )}
-                                            </DropdownMenuGroup>
+                                                            );
+                                                        })}
+                                                    </DropdownMenuGroup>
+                                                </>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
@@ -163,22 +169,61 @@ const CustomersTable = ({
                 </TableBody>
             </Table>
             <ConfirmDialog
-                open={!!pendingChange}
-                onOpenChange={(open) => {
-                    if (!open) setPendingChange(null);
-                }}
-                title="Update customer status"
+                open={statusOpen}
+                onOpenChange={(open) => !open && !statusUpdating && closeStatusDialog()}
+                variant={action?.variant ?? "default"}
+                title={action?.title ?? "Update status?"}
+                isLoading={statusUpdating}
+                confirmDisabled={isCancelling && !note.trim()}
                 description={
-                    pendingChange ? (
-                        <>
-                            Change <strong>{pendingChange.customer.names}</strong>&apos;s status
-                            to <strong>{pendingChange.status?.toUpperCase()}</strong>?
-                        </>
-                    ) : undefined
+                    pendingChange && (
+                        <div className="space-y-3">
+                            <p>Please confirm you want to update this application. This action is irreversible.</p>
+                            <div className="rounded-lg border-[.4] bg-muted/20 p-3 px-5 text-left mt-8">
+                                <p className="font-medium text-foreground">{pendingChange.customer.names}</p>
+                                <p className="text-xs text-muted-foreground">{pendingChange.customer.service}</p>
+                                <div className="mt-2 flex items-center gap-2 text-xs">
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium capitalize text-amber-700">
+                                        {pendingChange.customer.status}
+                                    </span>
+                                    <span className="text-muted-foreground">→</span>
+                                    <span
+                                        className={cn(
+                                            "rounded-full px-2 py-0.5 font-medium capitalize",
+                                            pendingChange.status === "completed" && "bg-emerald-100 text-emerald-700",
+                                            pendingChange.status === "cancelled" && "bg-red-100 text-red-700",
+                                            !["completed", "cancelled"].includes(pendingChange.status) && "bg-gray-100 text-gray-700",
+                                        )}
+                                    >
+                                        {pendingChange.status.replace(/_/g, " ")}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )
                 }
-                confirmLabel="Update"
+                confirmLabel={action?.confirm ?? "Yes, update"}
+                cancelLabel="No, go back"
+                loadingLabel="Updating…"
                 onConfirm={confirmStatusChange}
-            />
+            >
+                {isCancelling && (
+                    <div className="mx-auto w-full max-w-xl justify-self-center space-y-2 text-left">
+                        <label htmlFor="status-note" className="block text-sm font-medium">
+                            Reason for cancelling <span className="text-destructive">*</span>
+                        </label>
+                        <textarea
+                            id="status-note"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value.slice(0, 500))}
+                            placeholder="Why is this application being cancelled?"
+                            rows={3}
+                            className="w-full resize-none rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+                        />
+                        <p className="text-right text-xs text-muted-foreground">{note.length}/500</p>
+                    </div>
+                )}
+            </ConfirmDialog>
         </>
     );
 };
