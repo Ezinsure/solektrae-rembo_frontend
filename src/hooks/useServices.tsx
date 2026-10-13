@@ -1,58 +1,64 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleApiError } from "@/lib/apiError";
 import { toast } from "sonner";
 import { ServiceService } from "@/services/services";
+import { handleApiError } from "@/lib/apiError";
 
 export const SERVICES_KEY = "services";
+export const SERVICE_FIELDS_KEY = "service-fields";
 
-export const useGetServices = (
-  filters?: Record<string, string | number | boolean>,
-) => {
-  return useQuery({
-    queryKey: [SERVICES_KEY, filters],
-    queryFn: () => ServiceService.getAll(filters),
+// List (settings page passes { includeInactive: true } to also see hidden ones)
+export const useServices = (params?: any) =>
+  useQuery({
+    queryKey: [SERVICES_KEY, params],
+    queryFn: () => ServiceService.getAll(params),
+    select: (res: any) => res?.data ?? [],
   });
-};
 
-export const useGetService = (id: string) => {
-  return useQuery({
-    queryKey: [SERVICES_KEY, id],
-    queryFn: () => ServiceService.getOne(id),
-    enabled: !!id,
+// Field catalog: groups + fields with labels (rarely changes)
+export const useServiceFields = () =>
+  useQuery({
+    queryKey: [SERVICE_FIELDS_KEY],
+    queryFn: () => ServiceService.getFields(),
+    select: (res: any) => res?.data ?? { groups: [], fields: [] },
+    staleTime: Infinity,
   });
-};
 
 export const useCreateService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) => ServiceService.create(data),
+    mutationFn: (data: any) => ServiceService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [SERVICES_KEY],
-      });
-      toast.success("Service created successfully.", {
-        description: "The Service has been added to the system.",
-      });
+      queryClient.invalidateQueries({ queryKey: [SERVICES_KEY] });
+      toast.success("Service created");
     },
-    onError: (error) => {
-      handleApiError(error);
-    },
+    onError: (err: any) => handleApiError(err),
   });
 };
+
 export const useUpdateService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      ServiceService.update(id, data),
-    onSuccess: (_data, variables) => {
+    mutationFn: ({ id, data }: any) => ServiceService.update(id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [SERVICES_KEY] });
-      toast.success("Service updated successfully.", {
-        description: "The Service information has been updated.",
-      });
+      toast.success("Service updated");
     },
-    onError: handleApiError,
+    onError: (err: any) => handleApiError(err),
+  });
+};
+
+// Show / hide on the customer form
+export const useToggleService = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }: any) => ServiceService.update(id, { active }),
+    onSuccess: (_res, { active }: any) => {
+      queryClient.invalidateQueries({ queryKey: [SERVICES_KEY] });
+      toast.success(active ? "Shown on the customer form" : "Hidden from the customer form");
+    },
+    onError: (err: any) => handleApiError(err),
   });
 };
 
@@ -61,34 +67,21 @@ export const useDeleteService = () => {
   return useMutation({
     mutationFn: (id: string) => ServiceService.remove(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [SERVICES_KEY],
-      });
-
-      toast.success("Service deleted successfully.", {
-        description: "The Service has been removed from the system.",
-      });
+      queryClient.invalidateQueries({ queryKey: [SERVICES_KEY] });
+      toast.success("Service deleted");
     },
-    onError: (error) => {
-      handleApiError(error);
-    },
+    onError: (err: any) => handleApiError(err),
   });
 };
 
-export const useRestoreService = () => {
+export const useReorderServices = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => ServiceService.restore(id),
+    mutationFn: (ids: string[]) => ServiceService.reorder(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [SERVICES_KEY],
-      });
-      toast.success("Service restored successfully.", {
-        description: "The Service is active again.",
-      });
+      queryClient.invalidateQueries({ queryKey: [SERVICES_KEY] });
+      toast.success("Order saved");
     },
-    onError: (error) => {
-      handleApiError(error);
-    },
+    onError: (err: any) => handleApiError(err),
   });
 };

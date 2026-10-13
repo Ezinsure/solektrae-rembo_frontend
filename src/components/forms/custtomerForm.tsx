@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
     Field,
     FieldContent,
@@ -18,54 +19,121 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-    iremboSchema,
-    type IremboFormValues,
-    getStep1Fields,
-    getStep2Fields,
-    STEP2_ALL_FIELDS,
-    FIELD_META,
-} from "@/lib/form-schema";
-import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useCustomer";
+    useCreateCustomer,
+    usePublicServices,
+    useUpdateCustomer,
+} from "@/hooks/useCustomer";
 import IremboLogo from "../../assets/logos/irembo-blue.png";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { Skeleton } from "../ui/skeleton";
 
 type Step = 1 | 2 | 3;
 
-const SERVICES = [
-    { value: "passport", label: "Passport" },
-    { value: "laisserpasser", label: "Laissez-Passer" },
-    { value: "foreignid", label: "Foreigner ID" },
-    { value: "visa", label: "Visa" },
-    { value: "permit", label: "Permit" },
-    { value: "cpgl", label: "CEPGL" },
-    { value: "penalty", label: "Penalty" },
-    { value: "others", label: "Other Services" },
-];
+const PHONE_INPUT_STYLE = {
+    width: "100%",
+    height: "33px",
+    background: "white",
+    color: "#111",
+    border: "1px solid #d1d5db",
+    borderRadius: "0 0.5rem 0.5rem 0",
+};
+const PHONE_BUTTON_STYLE = {
+    background: "white",
+    border: "1px solid #d1d5db",
+    borderRadius: "0.5rem 0 0 0.5rem",
+};
+
+const isEmptyPhone = (v?: string) => !v || v.replace(/\D/g, "").length <= 3;
+
+const fieldLabel = (f: any) =>
+    `${f.label.en} / ${f.label.fr} / ${f.label.rw}${f.required ? " *" : ""}`;
+
+// Validation for one service field (required / optional, phone, number)
+const fieldRule = (f: any) =>
+    z
+        .string()
+        .optional()
+        .transform((v) => (v ?? "").trim())
+        .superRefine((v, ctx) => {
+            const empty = f.type === "phone" ? isEmptyPhone(v) : !v;
+            if (empty) {
+                if (f.required)
+                    ctx.addIssue({ code: "custom", message: "This field is required" });
+                return;
+            }
+            if (f.type === "phone" && !/^\+\d{8,15}$/.test(v)) {
+                ctx.addIssue({ code: "custom", message: "Enter a valid phone number" });
+            }
+            if (f.type === "number" && (isNaN(Number(v)) || Number(v) <= 0)) {
+                ctx.addIssue({ code: "custom", message: "Enter a valid number" });
+            }
+        });
+
+// Schema changes with the chosen service
+const buildSchema = (service: any) => {
+    const shape: any = {
+        name: z.string().trim().min(2, "Enter your full names"),
+        email: z.string().trim().email("Enter a valid email address"),
+        phone: z.string().regex(/^\+\d{8,15}$/, "Enter a valid phone number"),
+        serviceId: z.string().min(1, "Choose a service"),
+    };
+    if (service?.allowCustomName) {
+        shape.customServiceName = z.string().trim().min(2, "Type the service name");
+    }
+    for (const f of service?.fields ?? []) shape[f.key] = fieldRule(f);
+    return z.object(shape).passthrough();
+};
 
 export function CustomerForm({
     customer,
+    companySlug = process.env.NEXT_PUBLIC_COMPANY_SLUG?.trim() || "irembo-solektra",
     onSuccess,
 }: {
     customer?: any;
+    companySlug?: string;
     onSuccess?: () => void;
 }) {
     const isEdit = !!customer;
     const createCustomer = useCreateCustomer();
     const updateCustomer = useUpdateCustomer();
+    const {
+        data: publicData,
+        isLoading: servicesLoading,
+        isError: servicesError,
+    } = usePublicServices(companySlug);
+    const services: any[] = publicData?.services ?? [];
+
     const pathname = usePathname();
     const isPending = createCustomer.isPending || updateCustomer.isPending;
     const [step, setStep] = useState<Step>(1);
-    const [selectedOption, setSelectedOption] = useState(() => {
-        if (!customer) return "passport";
-        const known = SERVICES.some((s) => s.value === customer.service);
-        return known ? customer.service : "others";
-    });
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    // Resolver reads the latest schema (it changes when the service changes)
+    const schemaRef = useRef<any>(buildSchema(null));
+
+    const defaultValues: any = {
+        name: customer?.names ?? "",
+        email: customer?.email ?? "",
+        phone: customer?.phoneNumber ?? "",
+        serviceId: customer?.serviceId ?? "",
+        customServiceName: customer?.serviceRef ? "" : (customer?.service ?? ""),
+        fatherName: customer?.fatherName ?? "",
+        motherName: customer?.motherName ?? "",
+        spouseName: customer?.spouseName ?? "",
+        street: customer?.street ?? "",
+        district: customer?.district ?? "",
+        sector: customer?.sector ?? "",
+        cell: customer?.cell ?? "",
+        village: customer?.village ?? "",
+        height: customer?.height ?? "",
+        hovName: customer?.hovName ?? "",
+        hovNumber: customer?.hovNumber ?? "",
+    };
 
     const {
         register,
@@ -76,108 +144,110 @@ export function CustomerForm({
         setValue,
         watch,
         formState: { errors },
-    } = useForm<IremboFormValues>({
-        resolver: zodResolver(iremboSchema),
+    } = useForm<any>({
+        resolver: (values, ctx, opts) =>
+            zodResolver(schemaRef.current)(values, ctx, opts),
         mode: "onTouched",
-        defaultValues: {
-            name: customer?.names ?? "",
-            email: customer?.email ?? "",
-            phone: customer?.phoneNumber ?? "",
-            service: customer?.service ?? "passport",
-            fatherName: customer?.fatherName ?? "",
-            motherName: customer?.motherName ?? "",
-            spouseName: customer?.spouseName ?? "",
-            street: customer?.street ?? "",
-            district: customer?.district ?? "",
-            sector: customer?.sector ?? "",
-            cell: customer?.cell ?? "",
-            village: customer?.village ?? "",
-            height: customer?.height ?? "",
-            hovName: customer?.hovName ?? "",
-            hovNumber: customer?.hovNumber ?? "",
-        },
+        defaultValues,
     });
 
     const values = watch();
+    const selectedService = services.find((s) => s.id === values.serviceId);
+    const serviceFields: any[] = selectedService?.fields ?? [];
+    const hasDetailsStep = serviceFields.length > 0;
 
-    const serviceLabel =
-        selectedOption === "others"
-            ? values.service || "—"
-            : (SERVICES.find((s) => s.value === values.service)?.label ?? "—");
+    schemaRef.current = useMemo(
+        () => buildSchema(selectedService),
+        [selectedService],
+    );
 
-    const handleOptionChange = (option: string) => {
-        setSelectedOption(option);
-        setValue("service", option !== "others" ? option : "", {
-            shouldValidate: true,
-        });
+    // An edited customer may have a custom name from a catch-all service
+    if (
+        isEdit &&
+        selectedService?.allowCustomName &&
+        !values.customServiceName &&
+        customer?.service
+    ) {
+        setValue("customServiceName", customer.service);
+    }
+
+    const serviceLabel = selectedService
+        ? selectedService.allowCustomName
+            ? values.customServiceName || selectedService.name
+            : selectedService.name
+        : "—";
+
+    const handleOptionChange = (id: string) => {
+        setValue("serviceId", id, { shouldValidate: true });
+        setValue("customServiceName", "");
     };
 
     const goNext = async () => {
         const fields =
             step === 1
-                ? getStep1Fields(selectedOption)
-                : getStep2Fields(values.service);
+                ? ["name", "email", "phone", "serviceId"]
+                : serviceFields.map((f) => f.key);
+
         const ok = await trigger(fields as any, { shouldFocus: true });
-        if (ok) setStep((s) => (s + 1) as Step);
+        if (!ok) return;
+
+        if (step === 1) setStep(hasDetailsStep ? 2 : 3);
+        else setStep(3);
     };
 
-    const goBack = () => setStep((s) => (s - 1) as Step);
+    const goBack = () => {
+        if (step === 3) setStep(hasDetailsStep ? 2 : 1);
+        else setStep(1);
+    };
 
-    const onSubmit = (data: IremboFormValues) => {
+    const resetForm = () => {
+        reset(defaultValues);
+        setStep(1);
+    };
+
+    const onSubmit = (data: any) => {
         setSubmitError(null);
         setSubmitSuccess(false);
+        if (!selectedService) return setSubmitError("Please choose a service.");
 
-        const { name, phone, ...rest } = data;
-        const payload = {
-            ...rest,
-            names: name,
-            phoneNumber: phone,
+        const payload: any = {
+            names: data.name,
+            email: data.email,
+            phoneNumber: data.phone,
+            serviceId: data.serviceId,
+        };
+        if (selectedService.allowCustomName)
+            payload.customServiceName = data.customServiceName;
+        for (const f of serviceFields) {
+            const v = data[f.key] ?? "";
+            payload[f.key] = f.type === "phone" && isEmptyPhone(v) ? "" : v;
+        }
+
+        const handlers = {
+            onSuccess: () => {
+                setSubmitSuccess(true);
+                setTimeout(() => {
+                    if (!isEdit) resetForm();
+                    setSubmitSuccess(false);
+                    onSuccess?.();
+                }, 1200);
+            },
+            onError: (error: any) => {
+                setSubmitError(
+                    error?.response?.data?.message ??
+                    "Something went wrong. Please try again.",
+                );
+            },
         };
 
-        const mutation = isEdit
-            ? updateCustomer.mutate(
-                { id: customer.id, data: payload },
-                {
-                    onSuccess: () => {
-                        setSubmitSuccess(true);
-                        setTimeout(() => {
-                            setSubmitSuccess(false);
-                            onSuccess?.();
-                        }, 1200);
-                    },
-                    onError: (error: any) => {
-                        setSubmitError(
-                            error?.response?.data?.message ??
-                            "Something went wrong. Please try again.",
-                        );
-                    },
-                },
-            )
-            : createCustomer.mutate(payload, {
-                onSuccess: () => {
-                    setSubmitSuccess(true);
-                    setTimeout(() => {
-                        reset();
-                        setSelectedOption("passport");
-                        setStep(1);
-                        setSubmitSuccess(false);
-                        onSuccess?.();
-                    }, 1200);
-                },
-                onError: (error: any) => {
-                    setSubmitError(
-                        error?.response?.data?.message ??
-                        "Something went wrong. Please try again.",
-                    );
-                },
-            });
+        if (isEdit)
+            updateCustomer.mutate({ id: customer.id, data: payload }, handlers);
+        else createCustomer.mutate({ slug: companySlug, data: payload }, handlers);
     };
 
     const handleCancel = () => {
         if (confirm("Cancel and reset the form?")) {
-            reset();
-            setSelectedOption("passport");
-            setStep(1);
+            resetForm();
             onSuccess?.();
         }
     };
@@ -202,18 +272,19 @@ export function CustomerForm({
                                 step === n ? "font-medium" : "text-muted-foreground",
                             )}
                         >
-                            {n === 1 ? "Personal" : n === 2 ? "Location" : "Submit"}
+                            {n === 1 ? "Personal" : n === 2 ? "Details" : "Submit"}
                         </span>
                     </div>
                 ))}
             </div>
 
-            <div className="bg-white max-w-xl container mx-auto rounded-sm px-10 pb-8">
+            <div className="bg-white max-w-2xl container mx-auto rounded-sm px-10 pb-8">
                 {pathname === "/" && (
                     <header className="max-w-60 rounded-sm mx-auto mb-2">
                         <Image src={IremboLogo} alt="iremboLogo" />
                     </header>
                 )}
+
                 <form onSubmit={handleSubmit(onSubmit)}>
                     {step === 1 && (
                         <FieldSet>
@@ -234,7 +305,7 @@ export function CustomerForm({
                                     <Input id="name" {...register("name")} />
                                     {errors.name && (
                                         <p className="text-xs text-red-500 mt-1">
-                                            {errors.name.message}
+                                            {String(errors.name.message)}
                                         </p>
                                     )}
                                 </Field>
@@ -246,7 +317,7 @@ export function CustomerForm({
                                     <Input id="email" type="email" {...register("email")} />
                                     {errors.email && (
                                         <p className="text-xs text-red-500 mt-1">
-                                            {errors.email.message}
+                                            {String(errors.email.message)}
                                         </p>
                                     )}
                                 </Field>
@@ -263,120 +334,138 @@ export function CustomerForm({
                                                 country="rw"
                                                 value={field.value}
                                                 onChange={(value) => field.onChange("+" + value)}
-                                                inputStyle={{
-                                                    width: "100%",
-                                                    height: "33px",
-                                                    background: "white",
-                                                    color: "#111",
-                                                    border: "1px solid #d1d5db",
-                                                    borderRadius: "0 0.5rem 0.5rem 0",
-                                                }}
-                                                buttonStyle={{
-                                                    background: "white",
-                                                    border: "1px solid #d1d5db",
-                                                    borderRadius: "0.5rem 0 0 0.5rem",
-                                                }}
+                                                inputStyle={PHONE_INPUT_STYLE}
+                                                buttonStyle={PHONE_BUTTON_STYLE}
                                             />
                                         )}
                                     />
                                     {errors.phone && (
                                         <p className="text-xs text-red-500 mt-1">
-                                            {errors.phone.message}
+                                            {String(errors.phone.message)}
                                         </p>
                                     )}
                                 </Field>
+
                                 <Field>
-                                    <FieldLabel className="text-sm opacity-80">
+                                    <FieldLabel className="text-sm opacity-80 mb-1">
                                         Choose Service / Choisir un service / Hitamo Serivisi *
                                     </FieldLabel>
 
-                                    <RadioGroup
-                                        value={selectedOption}
-                                        onValueChange={handleOptionChange}
-                                        className="max-w-44"
-                                    >
-                                        {SERVICES.map((s) => (
-                                            <FieldLabel key={s.value} htmlFor={s.value}>
-                                                <Field orientation="horizontal">
-                                                    <FieldContent>
-                                                        <FieldTitle>{s.label}</FieldTitle>
-                                                    </FieldContent>
-                                                    <RadioGroupItem value={s.value} id={s.value} />
-                                                </Field>
-                                            </FieldLabel>
-                                        ))}
-                                    </RadioGroup>
+                                    {servicesLoading ? (
+                                        <div className="space-y-2">
+                                            {Array.from({ length: 3 }).map((_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex h-[39px] items-center justify-between max-w-1/2 rounded-xl border border-border px-2.5"
+                                                >
+                                                    <Skeleton className="h-4 w-24 rounded-md" />
+                                                    <Skeleton className="h-4 w-4 rounded-full" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : servicesError ? (
+                                        <p className="text-sm text-red-600">
+                                            Could not load services. Please refresh the page.
+                                        </p>
+                                    ) : services.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No services are available at the moment.
+                                        </p>
+                                    ) : (
+                                        <RadioGroup
+                                            value={values.serviceId}
+                                            onValueChange={handleOptionChange}
+                                            className="max-w-1/2"
+                                        >
+                                            {services.map((s) => (
+                                                <FieldLabel key={s.id} htmlFor={s.id}>
+                                                    <Field orientation="horizontal">
+                                                        <FieldContent>
+                                                            <FieldTitle>{s.name}</FieldTitle>
+                                                        </FieldContent>
+                                                        <RadioGroupItem value={s.id} id={s.id} />
+                                                    </Field>
+                                                </FieldLabel>
+                                            ))}
+                                        </RadioGroup>
+                                    )}
+                                    {errors.serviceId && (
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {String(errors.serviceId.message)}
+                                        </p>
+                                    )}
                                 </Field>
                             </FieldGroup>
 
                             <div className="flex justify-end mt-6">
-                                <Button type="button" onClick={goNext}>
+                                <Button
+                                    type="button"
+                                    onClick={goNext}
+                                    disabled={servicesLoading || services.length === 0}
+                                >
                                     Next <ArrowRight />
                                 </Button>
                             </div>
                         </FieldSet>
                     )}
+
                     {step === 2 && (
                         <FieldSet>
                             <FieldGroup>
-                                {STEP2_ALL_FIELDS.filter((key) =>
-                                    getStep2Fields(values.service).includes(key)
-                                ).map((key) => {
-                                    const meta = FIELD_META[key];
+                                {serviceFields.map((f) => (
+                                    <Field key={f.key}>
+                                        <FieldLabel htmlFor={f.key} className="text-sm opacity-80">
+                                            {fieldLabel(f)}
+                                        </FieldLabel>
 
-                                    if (meta.type === "phone") {
-                                        return (
-                                            <Field key={key}>
-                                                <FieldLabel htmlFor={key} className="text-sm opacity-80">
-                                                    {meta.label}
-                                                </FieldLabel>
-                                                <Controller
-                                                    name={key}
-                                                    control={control}
-                                                    render={({ field }) => (
-                                                        <PhoneInput
-                                                            country="rw"
-                                                            value={field.value}
-                                                            onChange={(value) => field.onChange("+" + value)}
-                                                            inputStyle={{
-                                                                width: "100%",
-                                                                height: "33px",
-                                                                background: "white",
-                                                                color: "#111",
-                                                                border: "1px solid #d1d5db",
-                                                                borderRadius: "0 0.5rem 0.5rem 0",
-                                                            }}
-                                                            buttonStyle={{
-                                                                background: "white",
-                                                                border: "1px solid #d1d5db",
-                                                                borderRadius: "0.5rem 0 0 0.5rem",
-                                                            }}
-                                                        />
-                                                    )}
-                                                />
-                                                {errors[key] && (
-                                                    <p className="text-xs text-red-500 mt-1">
-                                                        {errors[key]?.message}
-                                                    </p>
+                                        {f.type === "phone" ? (
+                                            <Controller
+                                                name={f.key}
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <PhoneInput
+                                                        country="rw"
+                                                        value={field.value}
+                                                        onChange={(value) => field.onChange("+" + value)}
+                                                        inputStyle={PHONE_INPUT_STYLE}
+                                                        buttonStyle={PHONE_BUTTON_STYLE}
+                                                    />
                                                 )}
-                                            </Field>
-                                        );
-                                    }
+                                            />
+                                        ) : (
+                                            <Input
+                                                id={f.key}
+                                                type={f.type === "number" ? "number" : "text"}
+                                                {...register(f.key)}
+                                            />
+                                        )}
 
-                                    return (
-                                        <Field key={key}>
-                                            <FieldLabel htmlFor={key} className="text-sm opacity-80">
-                                                {meta.label}
-                                            </FieldLabel>
-                                            <Input id={key} type={meta.type ?? "text"} {...register(key)} />
-                                            {errors[key] && (
-                                                <p className="text-xs text-red-500 mt-1">
-                                                    {errors[key]?.message}
-                                                </p>
-                                            )}
-                                        </Field>
-                                    );
-                                })}
+                                        {errors[f.key] && (
+                                            <p className="text-xs text-red-500 mt-1">
+                                                {String(errors[f.key]?.message)}
+                                            </p>
+                                        )}
+                                    </Field>
+                                ))}
+                                {selectedService?.allowCustomName && (
+                                    <Field>
+                                        <FieldLabel
+                                            htmlFor="customServiceName"
+                                            className="text-sm opacity-80"
+                                        >
+                                            Service name / Nom du service / Izina rya serivisi *
+                                        </FieldLabel>
+                                        <Input
+                                            id="customServiceName"
+                                            {...register("customServiceName")}
+                                        />
+                                        {errors.customServiceName && (
+                                            <p className="text-xs text-red-500 mt-1">
+                                                {String(errors.customServiceName.message)}
+                                            </p>
+                                        )}
+                                    </Field>
+                                )}
                             </FieldGroup>
 
                             <div className="flex justify-between mt-6">
@@ -415,20 +504,16 @@ export function CustomerForm({
                                     {serviceLabel}
                                 </p>
 
-                                {STEP2_ALL_FIELDS.filter(
-                                    (key) =>
-                                        key !== "service" &&
-                                        getStep2Fields(values.service).includes(key),
-                                ).map((key) => (
-                                    <p key={key}>
-                                        <span className="font-medium">
-                                            {FIELD_META[key].label.split(" / ")[0].replace(" *", "")}:
-                                        </span>{" "}
-                                        {key === "height" && values[key]
-                                            ? `${values[key]} cm`
-                                            : values[key] || "—"}
-                                    </p>
-                                ))}
+                                {serviceFields.map((f) => {
+                                    const v = values[f.key];
+                                    const empty = f.type === "phone" ? isEmptyPhone(v) : !v;
+                                    return (
+                                        <p key={f.key}>
+                                            <span className="font-medium">{f.label.en}:</span>{" "}
+                                            {empty ? "—" : f.key === "height" ? `${v} cm` : v}
+                                        </p>
+                                    );
+                                })}
                             </div>
 
                             {submitError && (

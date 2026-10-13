@@ -1,4 +1,3 @@
-// src/components/dashboard/TrendChart.tsx — new customers over time (single line, hover tooltip)
 "use client";
 
 import { formatDay } from "@/lib/dashboard/dashboard-data";
@@ -34,7 +33,7 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
     const rect = svgRef.current!.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
     let best = 0;
-    points.forEach((_, i) => { if (Math.abs(x(i) - px) < Math.abs(x(best) - px)) best = i; });
+    points?.forEach((_, i) => { if (Math.abs(x(i) - px) < Math.abs(x(best) - px)) best = i; });
     setHover(best);
   };
 
@@ -103,7 +102,7 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
 // Group daily counts into days (short ranges) or weeks (long ranges)
 export function buildTrend(dates: string[], from: string, to: string, days: number): TrendPoint[] {
   const counts = new Map<string, number>();
-  dates.forEach((d) => counts.set(d, (counts.get(d) ?? 0) + 1));
+  dates?.forEach((d) => counts.set(d, (counts.get(d) ?? 0) + 1));
 
   const weekly = days > 45;
   const points: TrendPoint[] = [];
