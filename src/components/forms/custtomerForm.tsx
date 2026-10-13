@@ -25,7 +25,7 @@ import {
 } from "@/hooks/useCustomer";
 import IremboLogo from "../../assets/logos/irembo-blue.png";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -251,6 +251,7 @@ export function CustomerForm({
             onSuccess?.();
         }
     };
+    console.log("company slug:", companySlug);
 
     return (
         <main className="md:pb-10">

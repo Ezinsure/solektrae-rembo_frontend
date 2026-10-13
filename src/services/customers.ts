@@ -14,9 +14,10 @@ export const CustomerService = {
 
   update: (id: string, data: any) => HttpRequest.patch(`${BASE}/${id}`, data),
 
-  updateStatus: (id: string, status: string) =>
+  updateStatus: (id: string, status: string, note?: string) =>
     HttpRequest.patch(`${BASE}/${id}/status`, {
       status,
+      note,
     }),
 
   remove: (id: string) => HttpRequest.delete(`${BASE}/${id}`),

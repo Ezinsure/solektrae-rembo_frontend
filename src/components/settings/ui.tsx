@@ -72,4 +72,4 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
 }
 
 export const inputClass =
-  "h-11 w-full rounded-md border border-gray-300 bg-white px-3 p-2 text-sm outline-none placeholder:text-gray-400 focus-visible:border-ring focus-visible:ring-ring/50";
+  "h-9 w-full rounded-md border border-gray-300 bg-white px-3 p-2 text-sm outline-none placeholder:text-gray-400 focus-visible:border-ring focus-visible:ring-ring/50";

@@ -63,9 +63,8 @@ const CompanyProfilePage = () => {
     const original: any = toForm(company);
     const dirty = FIELDS.some((k) => form[k] !== original[k]);
 
-    // Only admins can PATCH /companies/current
     const role = companies.find((c: any) => c.isCurrent)?.role;
-    const canEdit = role === "admin"; // TODO: match your UserRole value
+    const canEdit = role === "admin" || role === "dev";
 
     const set = (key: string) => (e: any) =>
         setForm((f: any) => ({ ...f, [key]: e.target.value }));
@@ -74,7 +73,6 @@ const CompanyProfilePage = () => {
         e.preventDefault();
         if (!form.name.trim()) return;
 
-        // Send only the fields that changed. An empty optional field is sent as null.
         const payload: any = {};
         for (const k of FIELDS) {
             if (form[k] !== original[k]) {
@@ -111,7 +109,7 @@ const CompanyProfilePage = () => {
             />
 
             <Section title="Logo">
-                <div className="flex items-center gap-4 bg-white p-2 md:p-10 rounded-2xl">
+                <div className="flex items-center gap-4 bg-white p-2 md:p-6 rounded-2xl">
                     <div className="relative flex size-16 items-center justify-center overflow-hidden rounded-xl border bg-muted">
                         {logoSrc ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -155,27 +153,27 @@ const CompanyProfilePage = () => {
             </Section>
 
             <Section title="Details">
-                <div className="grid gap-4 sm:grid-cols-2 bg-white p-2 md:p-10 rounded-2xl">
+                <div className="grid gap-4 sm:grid-cols-2 bg-white p-2 md:p-6 rounded-2xl">
                     <Field>
                         <FieldLabel htmlFor="name">Company name</FieldLabel>
-                        <Input  className={inputClass} id="name" value={form.name} onChange={set("name")} required disabled={!canEdit} />
+                        <Input className={inputClass} id="name" value={form.name} onChange={set("name")} required disabled={!canEdit} />
                     </Field>
                     <Field>
                         <FieldLabel htmlFor="phoneNumber">Phone number</FieldLabel>
-                        <Input  className={inputClass} id="phoneNumber" value={form.phoneNumber} onChange={set("phoneNumber")} placeholder="+250 7xx xxx xxx" disabled={!canEdit} />
+                        <Input className={inputClass} id="phoneNumber" value={form.phoneNumber} onChange={set("phoneNumber")} placeholder="+250 7xx xxx xxx" disabled={!canEdit} />
                     </Field>
                     <Field className="sm:col-span-2">
                         <FieldLabel htmlFor="email">Email</FieldLabel>
-                        <Input  className={inputClass} id="email" type="email" value={form.email} onChange={set("email")} disabled={!canEdit} />
+                        <Input className={inputClass} id="email" type="email" value={form.email} onChange={set("email")} disabled={!canEdit} />
                     </Field>
                     <Field className="sm:col-span-2">
                         <FieldLabel htmlFor="about">About</FieldLabel>
                         <textarea
                             id="about"
-                            rows={5}
+                            rows={3}
                             value={form.about}
                             onChange={set("about")}
-                          className={`${inputClass} h-auto py-2`}
+                            className={`${inputClass} h-auto py-2`}
                             disabled={!canEdit}
                         />
                     </Field>
@@ -183,7 +181,7 @@ const CompanyProfilePage = () => {
             </Section>
 
             {canEdit && (
-                hasAccess && (<div className="flex justify-end gap-2 py-6">
+                hasAccess && (<div className="flex justify-end gap-2 py-4">
                     <Button type="button" variant="outline" onClick={handleDiscard} disabled={!dirty || updateCompany.isPending}>
                         Discard
                     </Button>
