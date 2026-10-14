@@ -16,6 +16,7 @@ import { useDebouncedValue } from "@/hooks/useDebounceValue";
 import { TableFilters } from "@/components/ui/tableFilter";
 import { DateRange } from "react-day-picker";
 import { useServices } from "@/hooks/useServices";
+import { startOfDay} from "date-fns";
 
 const STATUS_OPTIONS = [
   { label: "All", value: "all" },
@@ -23,6 +24,11 @@ const STATUS_OPTIONS = [
   { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
 ];
+
+const todayRange = (): DateRange => {
+  const today = startOfDay(new Date());
+  return { from: today, to: today };
+};
 
 const CustomersView = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -34,7 +40,7 @@ const CustomersView = () => {
   const [status, setStatus] = useState("all");
   const [pageSize, setPageSize] = useState(25);
   const debouncedSearch = useDebouncedValue(search, 400);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(todayRange);
   const updateCustomerStatus = useUpdateCustomerStatus();
   const [serviceId, setServiceId] = useState("all");
   const { data: services = [] } = useServices({ includeInactive: true });
@@ -59,7 +65,7 @@ const CustomersView = () => {
     ...filters,
     page,
     limit: pageSize,
-  });
+  })
   const totalItems = customerData?.total ?? 0;
 
   return (

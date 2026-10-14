@@ -55,11 +55,9 @@ const CustomersTable = ({
 
     const openStatusDialog = (customer: any, status: string) => {
         setPendingChange({ customer, status });
-        setNote(""); // reset on open, not on close, so nothing changes while it animates out
+        setNote("");
         setStatusOpen(true);
     };
-
-    // keep pendingChange: the dialog keeps its content while closing
     const closeStatusDialog = () => setStatusOpen(false);
 
     const confirmStatusChange = () => {

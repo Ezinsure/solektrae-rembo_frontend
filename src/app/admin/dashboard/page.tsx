@@ -9,26 +9,53 @@ import { cn } from "@/lib/utils";
 import TrendChart, { buildTrend } from "@/components/dashboard/TrendChart";
 import { useDashboard } from "@/hooks/useDash";
 import { useGetAllCustomers } from "@/hooks/useCustomer";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PRESETS = [
+  { label: "Today", days: 0 },
   { label: "7 days", days: 6 },
   { label: "30 days", days: 29 },
   { label: "90 days", days: 89 },
 ] as const;
 
 // The statuses the system uses now
-const STATUS_LIST: any[] = STATUSES.filter((s: any) => ["pending", "completed", "cancelled"].includes(s.key));
+const STATUS_LIST: any[] = STATUSES.filter((s: any) => ["completed", "pending", "cancelled"].includes(s.key));
 // Statuses a staff member sets (pending is nobody's)
 const HANDLED_STATUSES: any[] = STATUS_LIST.filter((s: any) => s.key !== "pending");
 
-const STATUS_ICON: any = { pending: Clock, completed: CheckCircle2, cancelled: XCircle };
+const STATUS_ICON: any = { completed: CheckCircle2, pending: Clock, cancelled: XCircle };
+
+const STATUS_STYLE: any = {
+  completed: { icon: "bg-emerald-100 text-emerald-700", text: "text-emerald-800" },
+  pending: { icon: "bg-amber-100 text-amber-700", text: "text-amber-800" },
+  cancelled: { icon: "bg-red-100 text-red-700", text: "text-red-800" },
+};
+const DEFAULT_STYLE = { card: "border-gray-200 bg-white", icon: "bg-gray-100 text-gray-600", text: "text-gray-900" };
 
 const pct = (n: number, total: number) => (total ? Math.round((n / total) * 100) : 0);
+
+// % change vs the previous period; null when there is nothing to compare with
+const changePct = (now: number, before: number) =>
+  before ? Math.round(((now - before) / before) * 100) : null;
+
+// "today", "yesterday"
+const periodLabel = (from: string, to: string, today: string) => {
+  if (from === to) {
+    if (from === today) return "today";
+    if (from === addDays(today, -1)) return "yesterday";
+    return `on ${formatDay(from)}`;
+  }
+  return `${formatDay(from)} – ${formatDay(to)}`;
+};
+
+const rangeText = (from: string, to: string) =>
+  from === to ? formatDay(from) : `${formatDay(from)} – ${formatDay(to)}`;
 
 const EMPTY = {
   total: 0,
   previousTotal: 0,
   statusCounts: { pending: 0, completed: 0, cancelled: 0 } as any,
+  previousStatusCounts: {} as any,
   services: [] as any[],
   trend: [] as any[],
   staff: [] as any[],
@@ -36,25 +63,39 @@ const EMPTY = {
 
 export default function DashboardPage() {
   const today = dayKey(new Date());
-  const [from, setFrom] = useState(addDays(today, -29));
+  const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
   const [viewing, setViewing] = useState<string | null>(null);
 
   const days = Math.max(0, daysBetween(from, to));
   const activePreset = to === today ? PRESETS.find((p) => p.days === days)?.label : undefined;
+  const period = periodLabel(from, to, today);
 
-  const { data: api, isLoading, isFetching, isError } = useDashboard({ from, to });
-  const data = api ?? EMPTY;
+  // Chart: one day selected -> show it with the day before; otherwise the selected range
+  const trendFrom = days === 0 ? addDays(from, -1) : from;
+  const trendDays = daysBetween(trendFrom, to);
+
+  const { data: api, isLoading, isFetching, isError } = useDashboard({ from, to, trendFrom });
+  const data = { ...EMPTY, ...(api ?? {}) };
 
   // TrendChart builds its points from one day key per customer
   const trend = useMemo(
-    () => buildTrend(data.trend?.flatMap((t: any) => Array(t.count).fill(t.day)), from, to, days),
-    [data.trend, from, to, days],
+    () => buildTrend(data.trend?.flatMap((t: any) => Array(t.count).fill(t.day)), trendFrom, to, trendDays),
+    [data.trend, trendFrom, to, trendDays],
   );
+  const trendHasData = data.trend?.some((t: any) => t.count > 0);
 
-  const change = data.previousTotal
-    ? Math.round(((data.total - data.previousTotal) / data.previousTotal) * 100)
-    : null;
+  // "vs yesterday" instead of "vs previous 1 days"
+  // Today -> "vs yesterday", preset -> "vs previous 7 days", custom -> real dates from the API
+  const compareLabel =
+    days === 0 && from === today
+      ? "vs yesterday"
+      : activePreset
+        ? `vs previous ${days + 1} days`
+        : data.previousFrom && data.previousTo
+          ? `vs ${rangeText(data.previousFrom, data.previousTo)}`
+          : "vs previous period";
+
   const viewingStaff = data?.staff?.find((s: any) => s.id === viewing) ?? null;
 
   return (
@@ -66,13 +107,15 @@ export default function DashboardPage() {
             Dashboard {isFetching && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
           </h1>
           <p className="text-muted-foreground">
-            {formatDay(from, true)} – {formatDay(to, true)} · {days + 1} days
+            {days === 0
+              ? formatDay(from, true)
+              : `${formatDay(from, true)} – ${formatDay(to, true)} · ${days + 1} days`}
           </p>
         </div>
 
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Date range">
-            {PRESETS?.map((p) => (
+            {PRESETS.map((p) => (
               <button
                 key={p.label}
                 type="button"
@@ -105,30 +148,49 @@ export default function DashboardPage() {
       {/* Summary tiles */}
       <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-2 text-sm text-gray-500"><Users className="h-4 w-4" /> Total customers</div>
-          <p className="mt-3 text-3xl font-semibold text-gray-900">{isLoading ? "—" : data?.total?.toLocaleString()}</p>
-          {change !== null && (
-            <p className="mt-1 text-xs text-gray-500">
-              <span className={cn("font-medium", change >= 0 ? "text-emerald-700" : "text-red-700")}>
-                {change >= 0 ? "▲" : "▼"} {Math.abs(change)}%
-              </span>{" "}
-              vs previous {days + 1} days
-            </p>
+          <div className="flex items-center justify-between gap-2">
+            <span className={cn("text-sm font-medium text-[#004EA4]")}>Total customers</span>
+            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-[#004EA4]")}>
+              <Users className="h-4 w-4" />
+            </span>
+          </div>
+          <div className="mt-3 text-3xl font-semibold text-blue-800">{isLoading ? <Skeleton className="h-4 w-24" /> : data.total.toLocaleString()}</div>
+          {!isLoading && (
+            <Change
+              value={changePct(data.total, data.previousTotal)}
+              label={compareLabel}
+              fallback={
+                days === 0
+                  ? `${data.total.toLocaleString()} ${period}`
+                  : `≈ ${Math.round(data.total / (days + 1)).toLocaleString()} per day`
+              }
+            />
           )}
         </div>
-        {STATUS_LIST?.map((s: any) => {
+
+        {STATUS_LIST.map((s: any) => {
           const Icon = STATUS_ICON[s.key];
-          const n = data.statusCounts[s.key] ?? 0;
+          const style = STATUS_STYLE[s.key] ?? DEFAULT_STYLE;
+          const n = data.statusCounts?.[s.key] ?? 0;
+          const before = data.previousStatusCounts?.[s.key] ?? 0;
+          const share = pct(n, data.total);
+
           return (
-            <div key={s.key} className="rounded-2xl border border-gray-200 bg-white p-5">
-              <div className="flex items-center gap-2 text-sm text-gray-500"><Icon className="h-4 w-4" /> {s.label}</div>
-              <p className="mt-3 text-3xl font-semibold text-gray-900">{isLoading ? "—" : n.toLocaleString()}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
-                  <div className={cn("h-full rounded-full", s.dot)} style={{ width: `${pct(n, data.total)}%` }} />
-                </div>
-                <span className="text-xs text-gray-500">{pct(n, data.total)}%</span>
+            <div key={s.key} className={cn("rounded-2xl border p-5", style.card)}>
+              <div className="flex items-center justify-between gap-2">
+                <span className={cn("text-sm font-medium", style.text)}>{s.label}</span>
+                <span className={cn("flex h-8 w-8 items-center justify-center rounded-full", style.icon)}>
+                  <Icon className="h-4 w-4" />
+                </span>
               </div>
+              <div className={cn("mt-2 text-3xl font-semibold", style.text)}>{isLoading ? <Skeleton className="h-4 w-24" /> : n.toLocaleString()}</div>
+              {!isLoading && (
+                <Change
+                  value={changePct(n, before)}
+                  label={compareLabel}
+                  fallback={`${share}% of customers ${period}`}
+                />
+              )}
             </div>
           );
         })}
@@ -138,15 +200,18 @@ export default function DashboardPage() {
       <div className="mb-4 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="trend-title">
           <h2 id="trend-title" className="text-base font-semibold text-gray-900">New customers</h2>
-          <p className="text-sm text-gray-500">{days > 45 ? "Per week" : "Per day"}, for the selected dates</p>
+          <p className="text-sm text-gray-500">
+            {trendDays > 45 ? "Per week" : "Per day"},{" "}
+            {days === 0 ? `${period} and the day before` : "for the selected dates"}
+          </p>
           <div className="mt-4">
-            {isLoading ? <Empty text="Loading…" /> : data.total ? <TrendChart points={trend} /> : <Empty text="No customers in this period." />}
+            {isLoading ? <Empty text="Loading…" /> : trendHasData ? <TrendChart points={trend} /> : <Empty text="No customers in this period." />}
           </div>
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="services-title">
           <h2 id="services-title" className="text-base font-semibold text-gray-900">Customers by service</h2>
-          <p className="text-sm text-gray-500">Share of all customers in this period</p>
+          <p className="text-sm text-gray-500">Share of customers, {period}</p>
           {isLoading ? (
             <Empty text="Loading…" />
           ) : data.total ? (
@@ -166,7 +231,7 @@ export default function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <Empty text="No customers in this period." />
+            <Empty text={`No customers ${period}.`} />
           )}
         </section>
       </div>
@@ -176,13 +241,13 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-1 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <h2 id="staff-title" className="text-base font-semibold text-gray-900">Customers by staff member</h2>
-            <p className="text-sm text-gray-500">Who completed or cancelled customers who applied in this period</p>
+            <p className="text-sm text-gray-500">Who completed or cancelled customers who applied {period}</p>
           </div>
         </div>
 
         {!isLoading && data.staff.length === 0 ? (
           <div className="border-t border-gray-200 p-5 sm:p-6">
-            <Empty text="Nobody has handled a customer in this period yet." />
+            <Empty text={`Nobody has handled a customer ${period} yet.`} />
           </div>
         ) : (
           <>
@@ -251,21 +316,33 @@ export default function DashboardPage() {
         onClose={() => setViewing(null)}
         size="lg"
         title={viewingStaff?.name ?? ""}
-        description={viewingStaff ? `${viewingStaff.total} customers handled · ${formatDay(from)} – ${formatDay(to)}` : undefined}
+        description={viewingStaff ? `${viewingStaff.total} customers handled · ${period}` : undefined}
       >
-        {viewingStaff && <StaffDetails staff={viewingStaff} from={from} to={to} />}
+        {viewingStaff && <StaffDetails key={viewingStaff.id} staff={viewingStaff} from={from} to={to} />}
       </Modal>
     </div>
   );
 }
+function Change({ value, label, fallback }: { value: number | null; label: string; fallback: string }) {
+  if (value === null) return <p className="mt-1 text-xs text-gray-500">{fallback}</p>;
+  return (
+    <p className="mt-1 text-xs text-gray-500">
+      <span className={cn("font-medium", value >= 0 ? "text-emerald-700" : "text-red-700")}>
+        {value >= 0 ? "▲" : "▼"} {Math.abs(value)}%
+      </span>{" "}
+      {label}
+    </p>
+  );
+}
 
-// Customers handled by one staff member, loaded from the API
+// Customers handled by ONE staff member, in the selected dates
 function StaffDetails({ staff, from, to }: { staff: any; from: string; to: string }) {
   const [status, setStatus] = useState<string>("all");
 
   const params: any = { updatedById: staff.id, from, to, page: 1, limit: 50 };
   if (status !== "all") params.status = status;
 
+  // list endpoint (filters), not getOne(id)
   const { data: res, isLoading } = useGetAllCustomers(params);
   const list: any[] = res?.data ?? [];
   const total: number = res?.total ?? 0;
@@ -309,6 +386,7 @@ function StaffDetails({ staff, from, to }: { staff: any; from: string; to: strin
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-gray-900">{c.names}</p>
                   <p className="text-xs text-gray-500">{c.service} · {formatDay(dayKey(c.createdAt), true)}</p>
+                  {c.statusNote && <p className="mt-0.5 truncate text-xs text-red-600">Reason: {c.statusNote}</p>}
                 </div>
                 <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset", st.badge)}>
                   <span className={cn("h-1.5 w-1.5 rounded-full", st.dot)} /> {st.label}

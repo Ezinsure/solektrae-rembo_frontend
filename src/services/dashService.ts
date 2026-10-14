@@ -1,7 +1,6 @@
-// services/dashboardService.ts
-import HttpRequest from "@/lib/httpRequest"; // your path
+import HttpRequest from "@/lib/httpRequest";
 
+export type DashboardParams = { from: string; to: string; trendFrom?: string };
 export const DashboardService = {
-  get: (params: { from: string; to: string }) =>
-    HttpRequest.get("/dashboard", { params }),
+  get: (params: DashboardParams) => HttpRequest.get("/dashboard", { params }),
 };
