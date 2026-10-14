@@ -11,6 +11,7 @@ import PaginatePage from "@/components/pagination/page";
 import { actionMeta, entityLabel } from "@/components/common/statusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { kigaliDay } from "@/lib/dateRangeFilter";
 
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", {
@@ -31,17 +32,21 @@ const showValue = (v: any) =>
         : "No"
       : String(v);
 
+const DEFAULT_FROM = () => kigaliDay(-1);
+const DEFAULT_TO = () => kigaliDay();
+
 const LogsPage = () => {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<any>("all");
   const [entity, setEntity] = useState<any>("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState(DEFAULT_FROM);
+  const [to, setTo] = useState(DEFAULT_TO);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<any>(null);
 
   const debouncedSearch = useDebouncedValue(search, 400);
+  const isDefaultRange = from === DEFAULT_FROM() && to === DEFAULT_TO();
 
   const filters: any = {
     search: debouncedSearch.trim() || undefined,
@@ -64,20 +69,25 @@ const LogsPage = () => {
     search ||
     action !== "all" ||
     entity !== "all" ||
-    from ||
-    to
+    !isDefaultRange
   );
 
   const withReset =
     <T,>(setter: (v: T) => void) =>
-    (v: T) => {
-      setter(v);
-      setPage(1);
-    };
+      (v: T) => {
+        setter(v);
+        setPage(1);
+      };
   const clearFilters = () => {
     setSearch("");
     setAction("all");
     setEntity("all");
+    setFrom(DEFAULT_FROM());
+    setTo(DEFAULT_TO());
+    setPage(1);
+  };
+
+  const showAllTime = () => {
     setFrom("");
     setTo("");
     setPage(1);
@@ -89,15 +99,13 @@ const LogsPage = () => {
         title="Activity logs"
         description="A record of sign-ins and changes made in the system."
         action={
-          <Button
+          <div className="flex gap-2"><Button
             className="btn-secondary"
             onClick={() => exportLogs.mutate(filters)}
             disabled={total === 0 || exportLogs.isPending}
-            title={
-              hasFilters
-                ? "Exports all logs matching your filters"
-                : "Exports all logs"
-            }
+            title={hasFilters
+              ? "Exports all logs matching your filters"
+              : "Exports all logs"}
           >
             {exportLogs.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -106,6 +114,9 @@ const LogsPage = () => {
             )}
             {exportLogs.isPending ? "Preparing..." : "Export CSV"}
           </Button>
+            <Button variant="outline" onClick={showAllTime} disabled={!from && !to}>
+              All time
+            </Button></div>
         }
       />
 

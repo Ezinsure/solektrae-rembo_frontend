@@ -10,7 +10,11 @@ export interface NavLink {
 
 export const NAV_LINKS: NavLink[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
-  { label: "Customers", href: "/admin/customers", roles: ["staff", "user"] },
+  {
+    label: "Customers",
+    href: "/admin/customers",
+    roles: ["staff", "user", "hr"],
+  },
   { label: "Settings", href: "/admin/settings", roles: ["hr"] },
 ];
 

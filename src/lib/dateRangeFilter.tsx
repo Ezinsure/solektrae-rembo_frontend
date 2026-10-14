@@ -17,3 +17,9 @@ export function filterByDateRange<T extends { createdAt: string }>(
         return created >= from && created <= to;
     });
 }
+
+export const kigaliDay = (offsetDays = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toLocaleDateString("en-CA", { timeZone: "Africa/Kigali" });
+};
