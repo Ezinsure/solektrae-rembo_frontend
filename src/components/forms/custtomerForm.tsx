@@ -30,6 +30,7 @@ import { usePathname } from "next/navigation";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Skeleton } from "../ui/skeleton";
+import AddressFields, { ADDRESS_LEVELS, type AddressLevel } from "@/components/forms/adressFields";
 
 type Step = 1 | 2 | 3;
 
@@ -155,6 +156,11 @@ export function CustomerForm({
     const selectedService = services.find((s) => s.id === values.serviceId);
     const serviceFields: any[] = selectedService?.fields ?? [];
     const hasDetailsStep = serviceFields.length > 0;
+
+    // District / sector / cell / village are shown together as dropdowns
+    const isAddress = (k: string) => (ADDRESS_LEVELS as readonly string[]).includes(k);
+    const addressFields = serviceFields.filter((f) => isAddress(f.key));
+    const firstAddressKey = addressFields[0]?.key;
 
     schemaRef.current = useMemo(
         () => buildSchema(selectedService),
@@ -413,7 +419,7 @@ export function CustomerForm({
                     {step === 2 && (
                         <FieldSet>
                             <FieldGroup>
-                                {serviceFields.map((f) => (
+                                {/* {serviceFields.map((f) => (
                                     <Field key={f.key}>
                                         <FieldLabel htmlFor={f.key} className="text-sm opacity-80">
                                             {fieldLabel(f)}
@@ -447,7 +453,76 @@ export function CustomerForm({
                                             </p>
                                         )}
                                     </Field>
-                                ))}
+                                ))} */}
+                                {serviceFields.map((f) => {
+                                    if (isAddress(f.key)) {
+                                        if (f.key !== firstAddressKey) return null;
+                                        return (
+                                            <Field key="address">
+                                                <AddressFields
+                                                    levels={addressFields.map((a) => a.key as AddressLevel)}
+                                                    required={Object.fromEntries(addressFields.map((a) => [a.key, a.required]))}
+                                                    labels={Object.fromEntries(
+                                                        addressFields.map((a) => [a.key, `${a.label.en} / ${a.label.fr} / ${a.label.rw}`]),
+                                                    )}
+                                                    value={{
+                                                        district: values.district,
+                                                        sector: values.sector,
+                                                        cell: values.cell,
+                                                        village: values.village,
+                                                    }}
+                                                    errors={Object.fromEntries(
+                                                        ADDRESS_LEVELS.map((k) => [k, errors[k]?.message as string | undefined]),
+                                                    )}
+                                                    onChange={(patch, changed) =>
+                                                        Object.entries(patch).forEach(([k, v]) =>
+                                                            setValue(k, v, {
+                                                                shouldDirty: true,
+                                                                shouldValidate: k === changed && addressFields.some((a) => a.key === k),
+                                                            }),
+                                                        )
+                                                    }
+                                                />
+                                            </Field>
+                                        );
+                                    }
+
+                                    return (
+                                        <Field key={f.key}>
+                                            <FieldLabel htmlFor={f.key} className="text-sm opacity-80">
+                                                {fieldLabel(f)}
+                                            </FieldLabel>
+
+                                            {f.type === "phone" ? (
+                                                <Controller
+                                                    name={f.key}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <PhoneInput
+                                                            country="rw"
+                                                            value={field.value}
+                                                            onChange={(value) => field.onChange("+" + value)}
+                                                            inputStyle={PHONE_INPUT_STYLE}
+                                                            buttonStyle={PHONE_BUTTON_STYLE}
+                                                        />
+                                                    )}
+                                                />
+                                            ) : (
+                                                <Input
+                                                    id={f.key}
+                                                    type={f.type === "number" ? "number" : "text"}
+                                                    {...register(f.key)}
+                                                />
+                                            )}
+
+                                            {errors[f.key] && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {String(errors[f.key]?.message)}
+                                                </p>
+                                            )}
+                                        </Field>
+                                    );
+                                })}
                                 {selectedService?.allowCustomName && (
                                     <Field>
                                         <FieldLabel
