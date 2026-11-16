@@ -80,7 +80,6 @@ const CustomersTable = ({
                         <TableHead className="font-semibold">Email</TableHead>
                         <TableHead className="font-semibold">Phone</TableHead>
                         <TableHead className="font-semibold">Service</TableHead>
-                        {/* <TableHead className="font-semibold">District</TableHead> */}
                         <TableHead className="font-semibold">Status</TableHead>
                         <TableHead className="font-semibold last:rounded-tr-xl">Actions</TableHead>
                     </TableRow>

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login"];
+const PUBLIC_PATHS = ["/", "/data", "/login"];
 const AUTH_COOKIE = "logged_in";
 const HOME_AFTER_LOGIN = "/admin/dashboard";
 
@@ -28,6 +28,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|data/|\\.well-known|.*\\.(?:json|png|jpg|jpeg|svg|webp|ico)$).*)",
   ],
 };
